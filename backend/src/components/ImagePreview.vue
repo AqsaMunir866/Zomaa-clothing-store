@@ -65,20 +65,18 @@ function onFileChange($event) {
   files.value = [...files.value, ...chosenFiles];
   $event.target.value = ''
   const allPromises = [];
+  const newEntries = [];
   for (let file of chosenFiles) {
     file.id = uuidv4()
-    const promise = readFile(file)
+    const promise = readFile(file).then(url => {
+      newEntries.push({url, id: file.id})
+    })
     allPromises.push(promise)
-    promise
-      .then(url => {
-        imageUrls.value.push({
-          url,
-          id: file.id
-        })
-      })
   }
   Promise.all(allPromises)
     .then(() => {
+      // Newly uploaded images take priority and become the primary images
+      imageUrls.value = [...newEntries, ...imageUrls.value]
       updateImagePositions()
     })
   emit('update:modelValue', files.value)
@@ -148,16 +146,18 @@ function updateImagePositions() {
 }
 
 // Hooks
-watch('props.images', () => {
-  console.log(props.images)
-  imageUrls.value = [
-    ...imageUrls.value,
-    ...props.images.map(im => ({
-      ...im,
+watch('props.images', (imgs) => {
+  ;(imgs || []).forEach(im => {
+    if (!im || !im.id || !im.url) return
+    if (imageUrls.value.some(x => x.id === im.id)) return
+    imageUrls.value.push({
+      id: im.id,
+      url: im.url,
+      path: im.path,
+      position: im.position,
       isProp: true
-    }))
-  ]
-
+    })
+  })
   updateImagePositions()
 }, {immediate: true, deep: true})
 onMounted(() => {

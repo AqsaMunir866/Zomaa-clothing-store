@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
@@ -57,8 +58,22 @@ class ProductController extends Controller
 
             ->paginate(5);
 
+        $heroBanners = Banner::query()
+            ->active()
+            ->position('hero')
+            ->orderBy('sort_order')
+            ->get();
+
+        $splitBanners = Banner::query()
+            ->active()
+            ->position('split')
+            ->orderBy('sort_order')
+            ->get();
+
         return view('product.index', [
-            'products' => $products
+            'products' => $products,
+            'heroBanners' => $heroBanners,
+            'splitBanners' => $splitBanners,
         ]);
 
     }

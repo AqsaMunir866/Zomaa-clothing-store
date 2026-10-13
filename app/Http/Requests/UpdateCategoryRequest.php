@@ -38,7 +38,9 @@ class UpdateCategoryRequest extends FormRequest
                     }
                 }
             ],
-            'active' => ['required', 'boolean']
+            'active' => ['required', 'boolean'],
+            'image' => ['nullable', 'image', 'max:25000'],
+            'remove_image' => ['sometimes', 'boolean']
         ];
     }
 }

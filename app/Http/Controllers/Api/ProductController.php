@@ -134,6 +134,9 @@ class ProductController extends Controller
     private function saveImages($images, $positions, Product $product)
     {
         foreach ($positions as $id => $position) {
+            if (!is_numeric($id)) {
+                continue;
+            }
             ProductImage::query()
                 ->where('id', $id)
                 ->update(['position' => $position]);

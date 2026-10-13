@@ -8,6 +8,11 @@ Alpine.plugin(collapse)
 
 window.Alpine = Alpine;
 
+window.formatPkr = (value) => {
+    const num = Number(value) || 0;
+    return "Rs " + num.toLocaleString("en-PK", {maximumFractionDigits: 0});
+};
+
 document.addEventListener("alpine:init", async () => {
 
   Alpine.data("toast", () => ({
@@ -50,6 +55,24 @@ document.addEventListener("alpine:init", async () => {
           this.interval = null;
         }
       }, 30);
+    },
+  }));
+
+  Alpine.data("heroSlider", (raw) => ({
+    slides: raw?.slides || [],
+    index: 0,
+    timer: null,
+    init() {
+      this.timer = setInterval(() => this.next(), 6000);
+    },
+    next() {
+      this.index = (this.index + 1) % this.slides.length;
+    },
+    prev() {
+      this.index = (this.index - 1 + this.slides.length) % this.slides.length;
+    },
+    go(i) {
+      this.index = i;
     },
   }));
 
@@ -101,5 +124,26 @@ document.addEventListener("alpine:init", async () => {
   });
 });
 
+// ---------- Reveal on scroll ----------
+document.addEventListener('DOMContentLoaded', () => {
+  const items = document.querySelectorAll('[data-reveal]');
+  if (!items.length) return;
+
+  if (!('IntersectionObserver' in window)) {
+    items.forEach(el => el.classList.add('is-revealed'));
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, {threshold: 0.12, rootMargin: '0px 0px -40px 0px'});
+
+  items.forEach(el => observer.observe(el));
+});
 
 Alpine.start();

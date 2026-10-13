@@ -17,6 +17,9 @@
                          @click="sortCategories('name')">
           Name
         </TableHeaderCell>
+        <TableHeaderCell field="image">
+          Image
+        </TableHeaderCell>
         <TableHeaderCell field="slug" :sort-field="sortField" :sort-direction="sortDirection"
                          @click="sortCategories('slug')">
           Slug
@@ -40,7 +43,7 @@
       </thead>
       <tbody v-if="categories.loading || !categories.data.length">
       <tr>
-        <td colspan="7">
+        <td colspan="8">
           <Spinner v-if="categories.loading"/>
           <p v-else class="text-center py-8 text-gray-700">
             There are no categories
@@ -53,6 +56,11 @@
         <td class="border-b p-2 ">{{ category.id }}</td>
         <td class="border-b p-2 ">
          {{ category.name }}
+        </td>
+        <td class="border-b p-2">
+          <img v-if="category.image_url" :src="category.image_url"
+               class="h-10 w-10 object-cover rounded border border-gray-200"
+               alt="Category image">
         </td>
         <td class="border-b p-2 max-w-[200px] whitespace-nowrap overflow-hidden text-ellipsis">
           {{ category.slug }}

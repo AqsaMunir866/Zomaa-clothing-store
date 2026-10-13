@@ -38,9 +38,14 @@ class CategoryController extends Controller
     public function store(StoreCategoryRequest $request)
     {
         $data = $request->validated();
+        unset($data['image']);
         $data['created_by'] = $request->user()->id;
         $data['updated_by'] = $request->user()->id;
         $category = Category::create($data);
+
+        if ($request->hasFile('image')) {
+            $category->saveImage($request->file('image'));
+        }
 
         return new CategoryResource($category);
     }
@@ -51,8 +56,16 @@ class CategoryController extends Controller
     public function update(UpdateCategoryRequest $request, Category $category)
     {
         $data = $request->validated();
+        unset($data['image'], $data['remove_image']);
         $data['updated_by'] = $request->user()->id;
         $category->update($data);
+
+        if ($request->hasFile('image')) {
+            $category->saveImage($request->file('image'));
+        } elseif ($request->boolean('remove_image')) {
+            $category->deleteImageFile();
+            $category->update(['image' => null]);
+        }
 
         return new CategoryResource($category);
     }
@@ -62,6 +75,7 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
+        $category->deleteImageFile();
         $category->delete();
 
         return response()->noContent();

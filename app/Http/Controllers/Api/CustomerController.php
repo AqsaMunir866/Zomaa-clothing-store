@@ -12,9 +12,12 @@ use App\Http\Resources\CustomerResource;
 use App\Models\Country;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
-use http\Env\Request;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class CustomerController extends Controller
 {
@@ -44,6 +47,58 @@ class CustomerController extends Controller
         $paginator = $query->paginate($perPage);
 
         return CustomerListResource::collection($paginator);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param \App\Http\Requests\CustomerRequest $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(CustomerRequest $request)
+    {
+        $customerData = $request->validated();
+        $customerData['status'] = $customerData['status'] ? CustomerStatus::Active->value : CustomerStatus::Disabled->value;
+        $shippingData = $customerData['shippingAddress'];
+        $billingData = $customerData['billingAddress'];
+
+        $this->validate($request, [
+            'email' => ['required', 'email', 'unique:users,email'],
+        ], [], ['email' => 'email']);
+
+        DB::beginTransaction();
+        try {
+            $user = User::create([
+                'name' => trim($customerData['first_name'] . ' ' . $customerData['last_name']),
+                'email' => $customerData['email'],
+                'password' => Hash::make($request->input('password', Str::random(24))),
+            ]);
+
+            $customer = new Customer();
+            $customer->user_id = $user->id;
+            $customer->first_name = $customerData['first_name'];
+            $customer->last_name = $customerData['last_name'];
+            $customer->phone = $customerData['phone'];
+            $customer->status = $customerData['status'];
+            $customer->save();
+
+            $shippingData['customer_id'] = $user->id;
+            $shippingData['type'] = AddressType::Shipping->value;
+            CustomerAddress::create($shippingData);
+
+            $billingData['customer_id'] = $user->id;
+            $billingData['type'] = AddressType::Billing->value;
+            CustomerAddress::create($billingData);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::critical(__METHOD__ . ' method does not work. ' . $e->getMessage());
+            throw $e;
+        }
+
+        DB::commit();
+
+        return new CustomerResource($customer->fresh());
     }
 
     /**
@@ -111,7 +166,18 @@ class CustomerController extends Controller
      */
     public function destroy(Customer $customer)
     {
-        $customer->delete();
+        DB::beginTransaction();
+        try {
+            CustomerAddress::where('customer_id', $customer->user_id)->delete();
+            $customer->delete();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::critical(__METHOD__ . ' method does not work. ' . $e->getMessage());
+            throw $e;
+        }
+
+        DB::commit();
 
         return response()->noContent();
     }

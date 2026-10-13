@@ -3,6 +3,18 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --font-serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-white text-ink font-sans antialiased;
+  }
+
   .py-navbar-item {
     @apply py-6
   }
@@ -30,67 +42,121 @@
 
 @layer components {
   .btn-primary {
-    @apply text-white bg-purple-600 py-2 px-4 rounded shadow-md hover:bg-purple-700 active:bg-purple-800 transition-colors;
+    @apply inline-flex items-center justify-center gap-2 bg-ink text-white px-8 py-3 text-xs uppercase tracking-[0.22em] transition-colors duration-300 hover:bg-black active:bg-black disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 border border-ink text-ink px-8 py-3 text-xs uppercase tracking-[0.22em] transition-all duration-300 hover:bg-ink hover:text-white disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .btn-underline {
+    @apply inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-ink border-b border-ink pb-1 transition-colors hover:text-clay-500 hover:border-clay-500;
+  }
+
+  .eyebrow {
+    @apply text-[11px] uppercase tracking-[0.3em] text-ink-muted;
+  }
+
+  .input-line {
+    @apply bg-transparent border-0 border-b border-ink/20 focus:border-ink focus:ring-0 rounded-none px-0 text-sm;
   }
 }
 
+/* ---------- Reveal on scroll ---------- */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------- Hero ---------- */
+.hero-slide {
+  opacity: 0;
+  transition: opacity 1.1s ease;
+}
+
+.hero-slide.hero-active {
+  opacity: 1;
+}
+
+.hero-slide .hero-caption {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.9s ease 0.25s, transform 0.9s ease 0.25s;
+}
+
+.hero-slide.hero-active .hero-caption {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- Product cards ---------- */
+.product-card .product-media img {
+  @apply transition-transform duration-500 ease-out;
+}
+
+.product-card:hover .product-media img {
+  transform: scale(1.06);
+}
+
+.product-card .product-add {
+  @apply translate-y-full opacity-0 transition-all duration-300;
+}
+
+.product-card:hover .product-add {
+  @apply translate-y-0 opacity-100;
+}
+
+/* ---------- Category cards ---------- */
+.category-card .category-img {
+  @apply transition-transform duration-700 ease-out;
+}
+
+.category-card:hover .category-img {
+  transform: scale(1.07);
+}
+
+.category-card .category-caption {
+  @apply transition-colors duration-300;
+}
+
+/* ---------- Marquee ---------- */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.8s ease both;
+}
+
+.topline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e3dacb 15%, #e3dacb 85%, transparent);
+}
+
 body {
-  background-color: #e5e7eb;
-}
-
-
-.wysiwyg-content > blockquote,
-.wysiwyg-content > dl,
-.wysiwyg-content > dd,
-.wysiwyg-content > h1,
-.wysiwyg-content > h2,
-.wysiwyg-content > h3,
-.wysiwyg-content > h4,
-.wysiwyg-content > h5,
-.wysiwyg-content > h6,
-.wysiwyg-content > hr,
-.wysiwyg-content > figure,
-.wysiwyg-content > p,
-.wysiwyg-content > pre {
-  margin: revert;
-}
-
-.wysiwyg-content > ol,
-.wysiwyg-content > ul {
-  list-style: revert;
-  margin: revert;
-  padding: revert;
-}
-
-.wysiwyg-content > table {
-  border-collapse: revert;
-}
-
-.wysiwyg-content > h1,
-.wysiwyg-content > h2,
-.wysiwyg-content > h3,
-.wysiwyg-content > h4,
-.wysiwyg-content > h5,
-.wysiwyg-content > h6 {
-  font-size: revert;
-  font-weight: revert;
-}
-
-.table > tbody > tr > td,
-.table > thead > tr > th {
-  padding: 0.5rem;
-}
-
-.table-sm > tbody > tr > td,
-.table-sm > thead > tr > th {
-  padding: 0.25rem;
-}
-
-.category-list > .category-item:hover > .category-list {
-  display: flex;
-}
-
-.category-list > .category-item > .category-list > .category-item > .category-list {
-  left: 100%;
-  top: 0;
+  font-feature-settings: "kern";
 }

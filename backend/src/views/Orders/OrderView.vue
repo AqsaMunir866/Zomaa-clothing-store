@@ -26,6 +26,26 @@
           </td>
         </tr>
         <tr>
+          <td class="font-bold py-1 px-2">Payment Method</td>
+          <td>{{ order.payment?.type }}</td>
+        </tr>
+        <tr>
+          <td class="font-bold py-1 px-2">Payment Status</td>
+          <td>
+            <select v-model="order.payment.status" @change="onPaymentStatusChange">
+              <option value="pending">pending</option>
+              <option value="paid">paid</option>
+              <option value="failed">failed</option>
+            </select>
+          </td>
+        </tr>
+        <tr v-if="order.payment?.proof">
+          <td class="font-bold py-1 px-2">Payment Proof</td>
+          <td>
+            <a :href="order.payment.proof" target="_blank" class="text-indigo-600 underline">View uploaded proof</a>
+          </td>
+        </tr>
+        <tr>
           <td class="font-bold py-1 px-2">SubTotal</td>
           <td>{{ $filters.currencyUSD(order.total_price) }}</td>
         </tr>
@@ -139,7 +159,17 @@ function onStatusChange() {
     .then(({data}) => {
       store.commit('showToast', `Order status was successfully changed into "${order.value.status}"`)
     })
+}
 
+function onPaymentStatusChange() {
+  axiosClient.post(`/orders/change-payment-status/${order.value.id}/${order.value.payment.status}`)
+    .then(({data}) => {
+      if (order.value.payment.status === 'paid' && order.value.status !== 'paid') {
+        order.value.status = 'paid'
+        axiosClient.post(`/orders/change-status/${order.value.id}/paid`)
+      }
+      store.commit('showToast', `Payment status was successfully changed into "${order.value.payment.status}"`)
+    })
 }
 
 </script>

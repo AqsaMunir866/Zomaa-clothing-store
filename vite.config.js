@@ -11,4 +11,17 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    server: {
+        host: '0.0.0.0',
+        port: 3001,
+        strictPort: true,
+        watch: {
+            usePolling: true,
+            interval: 500,
+        },
+        hmr: {
+            host: 'localhost',
+            clientPort: 5173,
+        },
+    },
 });

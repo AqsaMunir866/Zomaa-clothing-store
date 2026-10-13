@@ -1,10 +1,13 @@
 <?php
 
+use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
@@ -29,10 +32,15 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::apiResource('customers', CustomerController::class);
     Route::apiResource('categories', CategoryController::class)->except('show');
     Route::get('/categories/tree', [CategoryController::class, 'getAsTree']);
+    Route::apiResource('banners', BannerController::class);
+    Route::apiResource('payment-methods', PaymentMethodController::class);
+    Route::get('/settings', [SettingController::class, 'index']);
+    Route::put('/settings', [SettingController::class, 'update']);
     Route::get('/countries', [CustomerController::class, 'countries']);
     Route::get('orders', [OrderController::class, 'index']);
     Route::get('orders/statuses', [OrderController::class, 'getStatuses']);
     Route::post('orders/change-status/{order}/{status}', [OrderController::class, 'changeStatus']);
+    Route::post('orders/change-payment-status/{order}/{status}', [OrderController::class, 'changePaymentStatus']);
     Route::get('orders/{order}', [OrderController::class, 'view']);
 
     // Dashboard Routes

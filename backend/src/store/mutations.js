@@ -105,3 +105,39 @@ export function setCategories(state, [loading, data = null]) {
 
   state.categories.loading = loading;
 }
+
+export function setBanners(state, [loading, data = null]) {
+
+  if (data) {
+    state.banners = {
+      ...state.banners,
+      data: data.data,
+    }
+  }
+
+  state.banners.loading = loading;
+}
+
+export function setPaymentMethods(state, [loading, data = null]) {
+
+  if (data) {
+    state.paymentMethods = {
+      ...state.paymentMethods,
+      data: data.data,
+    }
+  }
+
+  state.paymentMethods.loading = loading;
+}
+
+export function setSettings(state, [loading, data = null]) {
+
+  if (data) {
+    state.settings = {
+      ...state.settings,
+      data: data.data,
+    }
+  }
+
+  state.settings.loading = loading;
+}

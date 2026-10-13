@@ -17,6 +17,9 @@ import OrdersReport from "../views/Reports/OrdersReport.vue";
 import CustomersReport from "../views/Reports/CustomersReport.vue";
 import ProductForm from "../views/Products/ProductForm.vue";
 import Categories from "../views/Categories/Categories.vue";
+import Banners from "../views/Banners/Banners.vue";
+import PaymentMethods from "../views/PaymentMethods/PaymentMethods.vue";
+import Settings from "../views/Settings/Settings.vue";
 
 const routes = [
   {
@@ -46,6 +49,21 @@ const routes = [
         path: 'categories',
         name: 'app.categories',
         component: Categories
+      },
+      {
+        path: 'banners',
+        name: 'app.banners',
+        component: Banners
+      },
+      {
+        path: 'payment-methods',
+        name: 'app.payment-methods',
+        component: PaymentMethods
+      },
+      {
+        path: 'settings',
+        name: 'app.settings',
+        component: Settings
       },
       {
         path: 'products/create',

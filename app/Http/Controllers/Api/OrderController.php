@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderListResource;
 use App\Http\Resources\OrderResource;
@@ -50,12 +51,27 @@ class OrderController extends Controller
         return OrderStatus::getStatuses();
     }
 
+    public function changePaymentStatus(Order $order, $status)
+    {
+        if ($order->payment) {
+            $order->payment->status = $status;
+            $order->payment->save();
+        }
+
+        return response('', 200);
+    }
+
     public function changeStatus(Order $order, $status)
     {
         DB::beginTransaction();
         try {
             $order->status = $status;
             $order->save();
+
+            if ($status === OrderStatus::Paid->value && $order->payment) {
+                $order->payment->status = PaymentStatus::Paid->value;
+                $order->payment->save();
+            }
 
             if ($status === OrderStatus::Cancelled->value) {
                 foreach ($order->items as $item) {

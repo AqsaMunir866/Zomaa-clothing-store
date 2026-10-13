@@ -24,7 +24,7 @@
                 </tr>
                 <tr>
                     <td class="font-bold py-1 px-2">SubTotal</td>
-                    <td>${{ $order->total_price }}</td>
+                    <td>{{ \App\Support\Money::format($order->total_price) }}</td>
                 </tr>
                 </tbody>
             </table>
@@ -46,7 +46,7 @@
                         </div>
                         <div class="flex justify-between items-center">
                             <div class="flex items-center">Qty: {{$item->quantity}}</div>
-                            <span class="text-lg font-semibold"> ${{$item->unit_price}} </span>
+                            <span class="text-lg font-semibold"> {{ \App\Support\Money::format($item->unit_price) }} </span>
                         </div>
                     </div>
                 </div>
@@ -54,28 +54,31 @@
                 <hr class="my-3"/>
             @endforeach
 
+            @if (session('status'))
+                <div class="mb-4 rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                    {{ session('status') }}
+                </div>
+            @endif
+
             @if (!$order->isPaid())
-                <form action="{{ route('cart.checkout-order', $order) }}"
-                      method="POST">
-                    @csrf
-                    <button class="btn-primary flex items-center justify-center w-full mt-3">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                            />
-                        </svg>
-                        Make a Payment
-                    </button>
-                </form>
+                <a href="{{ route('order.pay', $order) }}"
+                   class="btn-primary flex items-center justify-center w-full mt-3">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                        />
+                    </svg>
+                    {{ $order->payment?->type === 'cod' ? 'View Payment Info' : 'Make a Payment' }}
+                </a>
             @endif
         </div>
     </div>

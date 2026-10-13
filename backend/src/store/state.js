@@ -61,5 +61,17 @@ export default {
   categories: {
     loading: false,
     data: [],
+  },
+  banners: {
+    loading: false,
+    data: [],
+  },
+  paymentMethods: {
+    loading: false,
+    data: [],
+  },
+  settings: {
+    loading: false,
+    data: {},
   }
 }

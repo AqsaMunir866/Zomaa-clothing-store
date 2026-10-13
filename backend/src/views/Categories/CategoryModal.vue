@@ -45,6 +45,29 @@
               <form @submit.prevent="onSubmit">
                 <div class="bg-white px-4 pt-5 pb-4">
                   <CustomInput class="mb-2" v-model="category.name" label="Name" :errors="errors['name']"/>
+                  <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                    <div class="flex items-center gap-4">
+                      <img v-if="previewUrl" :src="previewUrl" alt="Category image"
+                           class="w-24 h-28 object-cover rounded border border-gray-200">
+                      <div v-else
+                           class="w-24 h-28 rounded border border-dashed border-gray-300 flex items-center justify-center text-xs text-gray-400">
+                        No image
+                      </div>
+                      <div class="flex flex-col gap-2">
+                        <label
+                          class="cursor-pointer inline-flex items-center px-3 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                          {{ previewUrl ? 'Change' : 'Upload' }}
+                          <input type="file" accept="image/*" class="hidden" @change="onImageSelected">
+                        </label>
+                        <button v-if="category.image_url && !imageFile && !removeImage" type="button"
+                                class="text-xs text-red-600 hover:underline text-left"
+                                @click="clearImage">
+                          Remove image
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                   <CustomInput type="select"
                                :select-options="parentCategories"
                                class="mb-2"
@@ -74,7 +97,7 @@
 </template>
 
 <script setup>
-import {computed, onUpdated, ref} from 'vue'
+import {computed, onUpdated, ref, watch} from 'vue'
 import {Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot} from '@headlessui/vue'
 import {ExclamationIcon} from '@heroicons/vue/outline'
 import CustomInput from "../../components/core/CustomInput.vue";
@@ -97,7 +120,17 @@ const category = ref({
   name: props.category.name,
   active: props.category.active,
   parent_id: props.category.parent_id,
+  image: props.category.image ?? null,
+  image_url: props.category.image_url ?? null,
 })
+
+const imageFile = ref(null)
+const imagePreview = ref(null)
+const removeImage = ref(false)
+
+const previewUrl = computed(() =>
+  imagePreview.value || (removeImage.value ? null : category.value.image_url)
+)
 
 const emit = defineEmits(['update:modelValue', 'close'])
 
@@ -105,6 +138,13 @@ const show = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
+
+watch(show, (open) => {
+  if (open) {
+    store.dispatch('getCategories')
+  }
+})
+
 const parentCategories = computed(() => {
   return [
     {key: '', text: 'Select Parent Category'},
@@ -130,8 +170,29 @@ onUpdated(() => {
     name: props.category.name,
     active: props.category.active,
     parent_id: props.category.parent_id,
+    image: props.category.image ?? null,
+    image_url: props.category.image_url ?? null,
   }
+  imageFile.value = null
+  imagePreview.value = null
+  removeImage.value = false
 })
+
+function onImageSelected(event) {
+  const file = event.target.files && event.target.files[0]
+  if (!file) {
+    return
+  }
+  imageFile.value = file
+  removeImage.value = false
+  imagePreview.value = URL.createObjectURL(file)
+}
+
+function clearImage() {
+  imageFile.value = null
+  imagePreview.value = null
+  removeImage.value = true
+}
 
 function closeModal() {
   show.value = false
@@ -142,30 +203,39 @@ function closeModal() {
 function onSubmit() {
   loading.value = true
   category.value.active = !!category.value.active
+
+  const form = new FormData()
+  form.append('name', category.value.name)
+  form.append('active', category.value.active ? '1' : '0')
+  form.append('parent_id', category.value.parent_id || '')
+
+  if (imageFile.value) {
+    form.append('image', imageFile.value)
+  } else if (removeImage.value) {
+    form.append('remove_image', '1')
+  }
+
+  const payload = {...category.value, _form: form}
+  const success = (response) => {
+    loading.value = false
+    if (response.status === 200 || response.status === 201) {
+      store.commit('showToast', `Category was successfully ${category.value.id ? 'updated' : 'created'}`);
+      store.dispatch('getCategories')
+      closeModal()
+    }
+  }
+
   if (category.value.id) {
-    store.dispatch('updateCategory', category.value)
-      .then(response => {
-        loading.value = false;
-        if (response.status === 200) {
-          store.commit('showToast', 'Category was successfully updated');
-          store.dispatch('getCategories')
-          closeModal()
-        }
-      })
+    form.append('id', category.value.id)
+    store.dispatch('updateCategory', payload)
+      .then(success)
       .catch(err => {
         loading.value = false;
         errors.value = err.response.data.errors
       })
   } else {
-    store.dispatch('createCategory', category.value)
-      .then(response => {
-        loading.value = false;
-        if (response.status === 201) {
-          store.commit('showToast', 'Category was successfully created');
-          store.dispatch('getCategories')
-          closeModal()
-        }
-      })
+    store.dispatch('createCategory', payload)
+      .then(success)
       .catch(err => {
         loading.value = false;
         errors.value = err.response.data.errors

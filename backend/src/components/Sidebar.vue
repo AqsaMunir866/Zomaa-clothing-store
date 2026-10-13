@@ -27,6 +27,33 @@
         Products
       </span>
     </router-link>
+    <router-link :to="{name: 'app.banners'}"
+                 class="flex items-center p-2 rounded transition-colors hover:bg-black/30">
+      <span class="mr-2 text-gray-300">
+        <PhotographIcon class="w-5"/>
+      </span>
+      <span class="text-xs">
+        Banners
+      </span>
+    </router-link>
+    <router-link :to="{name: 'app.payment-methods'}"
+                 class="flex items-center p-2 rounded transition-colors hover:bg-black/30">
+      <span class="mr-2 text-gray-300">
+        <CreditCardIcon class="w-5"/>
+      </span>
+      <span class="text-xs">
+        Payment Methods
+      </span>
+    </router-link>
+    <router-link :to="{name: 'app.settings'}"
+                 class="flex items-center p-2 rounded transition-colors hover:bg-black/30">
+      <span class="mr-2 text-gray-300">
+        <CogIcon class="w-5"/>
+      </span>
+      <span class="text-xs">
+        Settings
+      </span>
+    </router-link>
     <router-link :to="{name: 'app.orders'}"
                  class="flex items-center p-2 rounded transition-colors hover:bg-black/30">
       <span class="mr-2 text-gray-300">
@@ -67,7 +94,7 @@
 </template>
 
 <script setup>
-  import {HomeIcon, UserGroupIcon, UsersIcon, ViewListIcon, ChartBarIcon} from '@heroicons/vue/outline'
+  import {HomeIcon, UserGroupIcon, UsersIcon, ViewListIcon, ChartBarIcon, PhotographIcon, CogIcon, CreditCardIcon} from '@heroicons/vue/outline'
 </script>
 
 <style scoped>

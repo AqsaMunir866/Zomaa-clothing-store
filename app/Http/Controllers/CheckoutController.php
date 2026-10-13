@@ -10,6 +10,7 @@ use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,115 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CheckoutController extends Controller
 {
+    public function view(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $customer = $user->customer;
+        if (!$customer || !$customer->billingAddress || !$customer->shippingAddress) {
+            return redirect()->route('profile')->with('error', 'Please provide your address details first.');
+        }
+
+        [$products, $cartItems] = Cart::getProductsAndCartItems();
+        $paymentMethods = PaymentMethod::active()->get();
+
+        return view('checkout.index', compact('products', 'cartItems', 'paymentMethods', 'customer'));
+    }
+
+    public function place(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $customer = $user->customer;
+        if (!$customer || !$customer->billingAddress || !$customer->shippingAddress) {
+            return redirect()->route('profile')->with('error', 'Please provide your address details first.');
+        }
+
+        $paymentMethod = PaymentMethod::active()
+            ->where('code', $request->input('payment_method'))
+            ->first();
+
+        if (!$paymentMethod) {
+            return redirect()->route('cart.index')->with('error', 'Please choose a valid payment method.');
+        }
+
+        [$products, $cartItems] = Cart::getProductsAndCartItems();
+
+        $orderItems = [];
+        $totalPrice = 0;
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($products as $product) {
+                $quantity = $cartItems[$product->id]['quantity'];
+                if ($product->quantity !== null && $product->quantity < $quantity) {
+                    $message = match ($product->quantity) {
+                        0 => 'The product "'.$product->title.'" is out of stock',
+                        1 => 'There is only one item left for product "'.$product->title.'"',
+                        default => 'There are only ' . $product->quantity . ' items left for product "'.$product->title.'"',
+                    };
+                    return redirect()->back()->with('error', $message);
+                }
+            }
+
+            foreach ($products as $product) {
+                $quantity = $cartItems[$product->id]['quantity'];
+                $totalPrice += $product->price * $quantity;
+                $orderItems[] = [
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                    'unit_price' => $product->price
+                ];
+
+                if ($product->quantity !== null) {
+                    $product->quantity -= $quantity;
+                    $product->save();
+                }
+            }
+
+            $order = Order::create([
+                'total_price' => $totalPrice,
+                'status' => OrderStatus::Processing,
+                'created_by' => $user->id,
+                'updated_by' => $user->id,
+            ]);
+
+            foreach ($orderItems as $orderItem) {
+                $orderItem['order_id'] = $order->id;
+                OrderItem::create($orderItem);
+            }
+
+            Payment::create([
+                'order_id' => $order->id,
+                'amount' => $totalPrice,
+                'status' => PaymentStatus::Pending,
+                'type' => $paymentMethod->code,
+                'created_by' => $user->id,
+                'updated_by' => $user->id,
+                'session_id' => null,
+            ]);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        CartItem::where(['user_id' => $user->id])->delete();
+
+        return redirect()->route('checkout.placed', $order);
+    }
+
+    public function placed(Order $order)
+    {
+        $paymentMethod = PaymentMethod::where('code', $order->payment->type ?? '')->first();
+
+        return view('checkout.placed', compact('order', 'paymentMethod'));
+    }
+
     public function checkout(Request $request)
     {
         /** @var \App\Models\User $user */
@@ -56,7 +166,7 @@ class CheckoutController extends Controller
             $totalPrice += $product->price * $quantity;
             $lineItems[] = [
                 'price_data' => [
-                    'currency' => 'usd',
+                    'currency' => 'pkr',
                     'product_data' => [
                         'name' => $product->title,
                         'images' => $product->image ? [$product->image] : []
@@ -176,7 +286,7 @@ class CheckoutController extends Controller
         foreach ($order->items as $item) {
             $lineItems[] = [
                 'price_data' => [
-                    'currency' => 'usd',
+                    'currency' => 'pkr',
                     'product_data' => [
                         'name' => $item->product->title,
 //                        'images' => [$product->image]

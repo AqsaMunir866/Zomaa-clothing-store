@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Customer;
 use App\Models\User;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -30,6 +30,12 @@ class EmailVerificationTest extends TestCase
         $user = User::factory()->create([
             'email_verified_at' => null,
         ]);
+        Customer::create([
+            'user_id' => $user->id,
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'status' => \App\Enums\CustomerStatus::Disabled->value,
+        ]);
 
         Event::fake();
 
@@ -43,7 +49,7 @@ class EmailVerificationTest extends TestCase
 
         Event::assertDispatched(Verified::class);
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
-        $response->assertRedirect(RouteServiceProvider::HOME.'?verified=1');
+        $response->assertRedirect(route('home').'?verified=1');
     }
 
     public function test_email_is_not_verified_with_invalid_hash()

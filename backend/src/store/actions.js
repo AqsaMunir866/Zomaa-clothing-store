@@ -85,10 +85,14 @@ export function createProduct({commit}, product) {
   if (product.images && product.images.length) {
     const form = new FormData();
     form.append('title', product.title);
-    product.images.forEach(im => form.append('images[]', im))
+    product.images.forEach(im => form.append(`images[]`, im))
+    if (product.categories) {
+      product.categories.forEach(c => form.append('categories[]', c))
+    }
     form.append('description', product.description || '');
     form.append('published', product.published ? 1 : 0);
     form.append('price', product.price);
+    form.append('quantity', product.quantity ?? '');
     product = form;
   }
   return axiosClient.post('/products', product)
@@ -107,9 +111,13 @@ export function updateProduct({commit}, product) {
     for (let id in product.image_positions) {
       form.append(`image_positions[${id}]`, product.image_positions[id])
     }
+    if (product.categories) {
+      product.categories.forEach(c => form.append('categories[]', c))
+    }
     form.append('description', product.description || '');
     form.append('published', product.published ? 1 : 0);
     form.append('price', product.price);
+    form.append('quantity', product.quantity ?? '');
     form.append('_method', 'PUT');
     product = form;
   } else {
@@ -205,13 +213,85 @@ export function getCategories({commit, state}, {sort_field, sort_direction} = {}
 }
 
 export function createCategory({commit}, category) {
-  return axiosClient.post('/categories', category)
+  return axiosClient.post('/categories', category._form || category)
 }
 
 export function updateCategory({commit}, category) {
-  return axiosClient.put(`/categories/${category.id}`, category)
+  if (category._form) {
+    category._form.append('_method', 'PUT')
+    return axiosClient.post(`/categories/${category.id}`, category._form)
+  }
+  category._method = 'PUT'
+  return axiosClient.post(`/categories/${category.id}`, category)
 }
 
 export function deleteCategory({commit}, category) {
   return axiosClient.delete(`/categories/${category.id}`)
+}
+
+export function getBanners({commit}) {
+  commit('setBanners', [true])
+  return axiosClient.get('/banners')
+    .then((response) => {
+      commit('setBanners', [false, response.data])
+    })
+    .catch(() => {
+      commit('setBanners', [false])
+    })
+}
+
+export function createBanner({commit}, banner) {
+  return axiosClient.post('/banners', banner)
+}
+
+export function updateBanner({commit}, banner) {
+  if (banner._form) {
+    const form = banner._form
+    form.append('_method', 'PUT')
+    return axiosClient.post(`/banners/${banner.id}`, form)
+  }
+  banner._method = 'PUT'
+  return axiosClient.post(`/banners/${banner.id}`, banner)
+}
+
+export function deleteBanner({commit}, banner) {
+  return axiosClient.delete(`/banners/${banner.id}`)
+}
+
+export function getPaymentMethods({commit}) {
+  commit('setPaymentMethods', [true])
+  return axiosClient.get('/payment-methods')
+    .then((response) => {
+      commit('setPaymentMethods', [false, response.data])
+    })
+    .catch(() => {
+      commit('setPaymentMethods', [false])
+    })
+}
+
+export function createPaymentMethod({commit}, paymentMethod) {
+  return axiosClient.post('/payment-methods', paymentMethod)
+}
+
+export function updatePaymentMethod({commit}, paymentMethod) {
+  return axiosClient.put(`/payment-methods/${paymentMethod.id}`, paymentMethod)
+}
+
+export function deletePaymentMethod({commit}, paymentMethod) {
+  return axiosClient.delete(`/payment-methods/${paymentMethod.id}`)
+}
+
+export function getSettings({commit}) {
+  commit('setSettings', [true])
+  return axiosClient.get('/settings')
+    .then((response) => {
+      commit('setSettings', [false, response.data])
+    })
+    .catch(() => {
+      commit('setSettings', [false])
+    })
+}
+
+export function updateSettings({commit}, settings) {
+  return axiosClient.post('/settings', settings)
 }
