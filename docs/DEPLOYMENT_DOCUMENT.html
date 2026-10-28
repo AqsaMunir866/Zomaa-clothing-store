@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Deployment Document — Laravel Vue E-Commerce</title>
+<style>
+  :root{
+    --ink:#1f2933; --muted:#5c6b7a; --line:#d9e1e8; --soft:#f4f7fa;
+    --brand:#1a4d80; --brand2:#0e7a6b; --accent:#b45309; --warn:#9a3412; --ok:#166534;
+    --code:#0f1b2d; --codeink:#e6edf6;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); font-size:10.5pt; line-height:1.5;
+  }
+  @page{ size:A4; margin:16mm 15mm; }
+  .wrap{ max-width:100%; }
+  h1,h2,h3,h4{ color:var(--brand); line-height:1.25; margin:0 0 .4em; }
+  h2{ font-size:16pt; border-bottom:2px solid var(--brand); padding-bottom:6px; margin-top:4px; }
+  h3{ font-size:12.5pt; color:var(--brand2); margin-top:18px; }
+  h4{ font-size:11pt; color:var(--ink); margin-top:14px; }
+  p{ margin:.45em 0; }
+  ul,ol{ margin:.4em 0 .6em 1.1em; padding:0; }
+  li{ margin:.18em 0; }
+  code{ font-family:"Consolas","Cascadia Mono",monospace; font-size:9pt;
+        background:#eef2f6; color:#0b3a66; padding:1px 4px; border-radius:3px; }
+  pre{ background:var(--code); color:var(--codeink); padding:10px 12px; border-radius:6px;
+       font-family:"Consolas","Cascadia Mono",monospace; font-size:8.6pt; line-height:1.45;
+       white-space:pre-wrap; word-break:break-word; margin:.5em 0; }
+  pre code{ background:none; color:inherit; padding:0; }
+  table{ width:100%; border-collapse:collapse; margin:.5em 0; font-size:9.2pt; }
+  th,td{ border:1px solid var(--line); padding:5px 7px; text-align:left; vertical-align:top; }
+  th{ background:#e8eef5; color:var(--brand); font-weight:600; }
+  tr:nth-child(even) td{ background:var(--soft); }
+  .callout{ border-left:4px solid var(--brand); background:var(--soft);
+            padding:8px 12px; margin:.6em 0; border-radius:0 5px 5px 0; }
+  .callout.warn{ border-color:var(--warn); background:#fdf3ee; }
+  .callout.ok{ border-color:var(--ok); background:#eefaf1; }
+  .callout.gold{ border-color:var(--accent); background:#fdf7ee; }
+  .tag{ display:inline-block; font-size:8pt; font-weight:600; padding:1px 7px; border-radius:10px;
+        background:#e8eef5; color:var(--brand); margin-right:5px; }
+  .tag.rec{ background:#e7f6ef; color:var(--ok); }
+  .tag.no{ background:#fdecec; color:#a11; }
+  .pb{ break-before:page; page-break-before:always; }
+  .avoid{ break-inside:avoid; page-break-inside:avoid; }
+  /* Cover */
+  .cover{ height:253mm; display:flex; flex-direction:column; justify-content:center;
+          border-top:10px solid var(--brand); border-bottom:10px solid var(--brand2); padding:0 8mm; }
+  .cover .brand{ letter-spacing:3px; font-size:11pt; color:var(--brand2); font-weight:700; }
+  .cover h1{ font-size:30pt; margin:.15em 0; }
+  .cover .sub{ font-size:14pt; color:var(--muted); }
+  .cover .meta{ margin-top:26px; font-size:10pt; }
+  .cover .meta td{ border:none; padding:2px 10px 2px 0; background:none; }
+  .km{ display:flex; gap:8px; flex-wrap:wrap; margin-top:22px; }
+  .km div{ border:1px solid var(--line); border-radius:6px; padding:6px 10px; font-size:9pt; }
+  .km b{ color:var(--brand); display:block; font-size:8pt; text-transform:uppercase; letter-spacing:.5px; }
+  /* Diagram */
+  .diagram{ border:1px dashed var(--line); border-radius:8px; padding:14px; margin:.6em 0; background:#fbfdff; }
+  .rowc{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
+  .box{ border:1.5px solid var(--brand); border-radius:7px; padding:8px 12px; text-align:center;
+        background:#fff; min-width:150px; }
+  .box b{ display:block; font-size:10pt; color:var(--brand); }
+  .box span{ font-size:8.2pt; color:var(--muted); }
+  .box.alt{ border-color:var(--brand2); } .box.alt b{ color:var(--brand2); }
+  .box.db{ border-color:var(--accent); } .box.db b{ color:var(--accent); }
+  .arrow{ font-size:13pt; color:var(--muted); }
+  .down{ text-align:center; color:var(--muted); font-size:12pt; margin:3px 0; }
+  .cols{ display:flex; gap:14px; }
+  .cols .col{ flex:1; }
+  small{ color:var(--muted); }
+  .toc td{ border:none; padding:3px 4px; background:none; }
+  .toc td.n{ color:var(--brand); font-weight:600; width:26px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="brand">MAISON BLANC</div>
+  <h1>Deployment Document</h1>
+  <div class="sub">Laravel 11 · Vue 3 Admin SPA · MySQL</div>
+  <table class="meta">
+    <tr><td><b>Document</b></td><td>Deployment &amp; Hosting Guide</td></tr>
+    <tr><td><b>Project</b></td><td>laravel-vue-ecommerce (clothing e-commerce)</td></tr>
+    <tr><td><b>Version</b></td><td>1.0</td></tr>
+    <tr><td><b>Date</b></td><td>15 October 2026</td></tr>
+    <tr><td><b>Scope</b></td><td>Architecture, structure, flow, hosting options, interlinking, step-by-step deployment</td></tr>
+  </table>
+  <div class="km">
+    <div><b>Pattern</b>Modular monolith + SPA</div>
+    <div><b>Backend</b>PHP 8.2 / Laravel 11</div>
+    <div><b>Frontend</b>Blade + Vue 3</div>
+    <div><b>Database</b>MySQL 8</div>
+    <div><b>Auth</b>Breeze + Sanctum</div>
+  </div>
+</section>
+
+<!-- ============ TOC ============ -->
+<section class="pb">
+  <h2>Contents</h2>
+  <table class="toc">
+    <tr><td class="n">1</td><td>Executive Summary</td></tr>
+    <tr><td class="n">2</td><td>Architecture Overview — Monolith or Microservices?</td></tr>
+    <tr><td class="n">3</td><td>Project Structure (Frontend &amp; Backend)</td></tr>
+    <tr><td class="n">4</td><td>Request &amp; Data Flow</td></tr>
+    <tr><td class="n">5</td><td>Deployment Topology — One Platform or Many?</td></tr>
+    <tr><td class="n">6</td><td>Platform Recommendations (Free &amp; Paid)</td></tr>
+    <tr><td class="n">7</td><td>Step-by-Step Deployment Walkthrough</td></tr>
+    <tr><td class="n">8</td><td>Environment Variables Matrix</td></tr>
+    <tr><td class="n">9</td><td>Post-Deployment Verification Checklist</td></tr>
+    <tr><td class="n">A</td><td>Appendix A — Route Map</td></tr>
+    <tr><td class="n">B</td><td>Appendix B — Data Model</td></tr>
+  </table>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="pb">
+  <h2>1. Executive Summary</h2>
+  <p>This document describes how to deploy the <b>laravel-vue-ecommerce</b> application, its
+  structure, its runtime flow, the platforms it can be hosted on, and exactly how the pieces are
+  interlinked when they live on <b>different platforms</b>.</p>
+
+  <h3>Key conclusions</h3>
+  <ul>
+    <li><b>Architecture:</b> a <b>modular monolith</b> (one Laravel application serving both the
+      server-rendered storefront <i>and</i> the REST API) with a <b>decoupled Vue 3 admin SPA</b>.
+      It is <b>not</b> microservices.</li>
+    <li><b>Deployable units:</b> only <b>two</b> code units — (1) the Laravel app (storefront + API)
+      and (2) the Vue admin SPA. They share <b>one database</b> and <b>one file store</b>.</li>
+    <li><b>Simplest hosting:</b> put <b>everything on one origin</b> (Laravel app + admin SPA served
+      from the same domain). This eliminates CORS and cookie/domain complexity.</li>
+    <li><b>Split hosting is possible:</b> host the API on a PHP/Docker host and the admin SPA on a
+      static host (Netlify/Cloudflare/Vercel). This requires configuring <code>VITE_API_BASE_URL</code>,
+      <code>config/cors.php</code>, and <code>APP_URL</code> — all covered in §7.6.</li>
+    <li><b>Interlinking mechanism:</b> the storefront is server-side (same origin as the API by
+      design); the SPA connects over HTTP using a <b>base URL env variable</b> and a
+      <b>Sanctum Bearer token</b>.</li>
+  </ul>
+
+  <div class="callout">
+    <b>Recommended path:</b> single Docker host (Laravel + nginx) with the admin SPA served under
+    <code>/admin</code>, backed by a managed MySQL. Add object storage for persistent uploads.
+    Details in §5.1 and §7.
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="pb">
+  <h2>2. Architecture Overview — Monolith or Microservices?</h2>
+
+  <h3>2.1 The verdict</h3>
+  <table class="avoid">
+    <tr><th>Question</th><th>Answer</th></tr>
+    <tr><td>Is it monolithic?</td><td><b>Yes — a modular monolith.</b> All backend concerns
+      (storefront controllers, REST API, models, auth, mail) live in <b>one</b> Laravel codebase,
+      deploy, and process.</td></tr>
+    <tr><td>Is it microservices?</td><td><b>No.</b> There are no independently deployable services
+      with separate databases or inter-service messaging.</td></tr>
+    <tr><td>Is the frontend separate?</td><td><b>Partly.</b> The <b>storefront</b> is rendered by
+      Laravel (not a separate app). The <b>admin panel</b> is a <b>separate Vue SPA</b> that consumes
+      the Laravel API.</td></tr>
+    <tr><td>How many things do you deploy?</td><td><b>Two units</b> (Laravel app, Vue SPA) + one
+      database + one file store. The two units can be co-hosted or split.</td></tr>
+  </table>
+
+  <div class="callout gold">
+    <b>Pattern name:</b> <i>Modular monolith with a decoupled admin SPA</i> — sometimes called a
+    "Laravel + headless-ish admin" or "BFF" pattern. It gives you the operational simplicity of a
+    monolith with a modern SPA for back-office users.
+  </div>
+
+  <h3>2.2 Component diagram</h3>
+  <div class="diagram">
+    <div class="rowc">
+      <div class="box"><b>Public Visitor</b><span>Browser</span></div>
+      <div class="arrow">&#8594;</div>
+      <div class="box alt"><b>Storefront</b><span>Laravel Blade + Alpine<br>routes/web.php</span></div>
+    </div>
+    <div class="down">&#8595; Eloquent / SQL</div>
+    <div class="rowc">
+      <div class="box"><b>Admin Staff</b><span>Browser</span></div>
+      <div class="arrow">&#8594;</div>
+      <div class="box alt"><b>Vue 3 Admin SPA</b><span>backend/ (separate build)</span></div>
+      <div class="arrow">&#8594;</div>
+      <div class="box"><b>Laravel REST API</b><span>/api/* · Sanctum token</span></div>
+    </div>
+    <div class="down">&#8595;</div>
+    <div class="rowc">
+      <div class="box db"><b>MySQL 8</b><span>single shared database</span></div>
+      <div class="box db"><b>File Storage</b><span>local/public disk or S3/R2</span></div>
+      <div class="box db"><b>Mail</b><span>log / SMTP</span></div>
+    </div>
+  </div>
+
+  <h3>2.3 Runtime units &amp; their boundaries</h3>
+  <table>
+    <tr><th>Unit</th><th>Technology</th><th>Talks to</th><th>Deployable independently?</th></tr>
+    <tr><td>Laravel app (storefront + API)</td><td>PHP 8.2 / nginx / php-fpm</td><td>MySQL, file store, mail</td><td>Yes</td></tr>
+    <tr><td>Admin SPA</td><td>Vue 3 static bundle</td><td>Laravel API over HTTPS</td><td>Yes</td></tr>
+    <tr><td>Database</td><td>MySQL 8 (or SQLite)</td><td>—</td><td>Yes (managed)</td></tr>
+    <tr><td>File store</td><td>Local disk or S3/R2</td><td>—</td><td>Yes (managed)</td></tr>
+  </table>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="pb">
+  <h2>3. Project Structure (Frontend &amp; Backend)</h2>
+  <p>The repository contains <b>two frontends</b> (storefront + admin) and <b>one backend</b>
+  (Laravel) in a single tree.</p>
+
+  <pre><code>laravel-vue-ecommerce/
+├── app/                        # BACKEND (Laravel)
+│   ├── Enums/                  # OrderStatus, PaymentStatus, AddressType, CustomerStatus
+│   ├── Helpers/Cart.php        # guest cookie cart + authenticated DB cart
+│   ├── Http/
+│   │   ├── Controllers/        # Storefront controllers (Home, Cart, Checkout, Order, Profile)
+│   │   ├── Controllers/Api/    # Admin REST API controllers (Products, Orders, Settings, ...)
+│   │   ├── Middleware/         # Admin.php, GuestOrVerified.php
+│   │   ├── Requests/           # validation
+│   │   └── Resources/          # API JSON resources
+│   ├── Models/                 # Eloquent models
+│   └── Support/                # Money.php, Settings.php
+├── backend/                    # FRONTEND #2 — Vue 3 admin SPA (own Vite app)
+│   ├── src/{components,views,store,router,axios.js}
+│   ├── .env.example            # VITE_API_BASE_URL
+│   └── vite.config.js
+├── resources/
+│   ├── css/app.css, js/app.js  # FRONTEND #1 — storefront Vite inputs
+│   └── views/                  # Blade templates
+├── routes/{web.php, api.php, auth.php}
+├── database/{migrations, seeders, factories}
+├── public/                     # web root: index.php, build/, storage symlink
+├── config/                     # Laravel config
+├── tests/                      # PHPUnit (Unit + Feature)
+├── Dockerfile                  # php-fpm image
+├── docker-compose.yml          # local dev stack
+├── vite.config.js              # storefront Vite config
+└── composer.json / package.json</code></pre>
+
+  <div class="cols">
+    <div class="col">
+      <h3>Backend (Laravel)</h3>
+      <ul>
+        <li>Serves <b>HTML</b> (storefront) and <b>JSON</b> (API) from one app.</li>
+        <li>Entry point: <code>public/index.php</code>.</li>
+        <li>Routes: <code>web.php</code> (sessions) &amp; <code>api.php</code> (tokens).</li>
+        <li>Middleware config in <code>bootstrap/app.php</code> (Laravel 11).</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Frontend (two builds)</h3>
+      <ul>
+        <li><b>Storefront:</b> Blade + Alpine + Tailwind → <code>public/build</code>.</li>
+        <li><b>Admin SPA:</b> Vue 3 + Vuex + Router → <code>backend/dist</code>.</li>
+        <li>Each has its own <code>package.json</code> and Vite config.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="pb">
+  <h2>4. Request &amp; Data Flow</h2>
+
+  <h3>4.1 Storefront (server-rendered, same origin)</h3>
+  <pre><code>Browser ──GET / ──► Laravel router (web.php)
+                       └─► ProductController@index
+                             ├─ Eloquent: products, banners, categories
+                             └─► Blade view + Vite assets (public/build)
+Browser ◄── HTML ────┘
+
+Add to cart ─► Cart helper ─► cookie (guest) OR cart_items table (auth user)
+Checkout    ─► validate method ─► create Order + OrderItems + Payment ─► confirmation
+Payment     ─► upload proof ─► stored on public disk ─► admin verifies</code></pre>
+
+  <h3>4.2 Admin SPA (decoupled, token-based)</h3>
+  <pre><code>Vue SPA ──POST /api/login {email,password}──► AuthController
+                                               └─► { user, token }  (Sanctum)
+Vue SPA stores token in sessionStorage
+Vue SPA ──GET /api/products  (Authorization: Bearer &lt;token&gt;)──► ProductController
+                                               └─► JSON (Resource collection)
+On 401 ─► axios interceptor clears token ─► redirect to login</code></pre>
+
+  <div class="callout">
+    <b>Auth split:</b> storefront users use the <b>web session guard</b> (Breeze);
+    admin users use <b>API tokens</b> (Sanctum) and must have <code>is_admin = 1</code>
+    (enforced by the <code>admin</code> middleware).
+  </div>
+
+  <h3>4.3 Order &amp; payment lifecycle</h3>
+  <pre><code>Order:   processing ──► paid ──► shipped ──► completed
+              │
+              └──► cancelled (stock restored)
+
+Payment: pending ──► paid  |  failed</code></pre>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="pb">
+  <h2>5. Deployment Topology — One Platform or Many?</h2>
+  <p>Because the app is a monolith + SPA, you have three practical topologies. Choose based on how
+  much operational simplicity vs. separation you want.</p>
+
+  <h3>5.1 Option A — Single origin (all-in-one) <span class="tag rec">RECOMMENDED</span></h3>
+  <div class="diagram">
+    <div class="rowc">
+      <div class="box"><b>One Domain</b><span>https://shop.example.com</span></div>
+    </div>
+    <div class="down">&#8595;</div>
+    <div class="rowc">
+      <div class="box alt"><b>Laravel app</b><span>/ and /api/*</span></div>
+      <div class="box alt"><b>Admin SPA</b><span>served at /admin</span></div>
+    </div>
+    <div class="down">&#8595;</div>
+    <div class="rowc">
+      <div class="box db"><b>MySQL</b></div>
+      <div class="box db"><b>File storage</b></div>
+    </div>
+  </div>
+  <ul>
+    <li><b>Benefits:</b> no CORS; cookies/sessions just work; one URL; one SSL cert; simplest ops.</li>
+    <li><b>Requirements:</b> the build step copies <code>backend/dist</code> into
+      <code>public/admin</code>; set the SPA base path to <code>/admin</code> (see §7.6.1).</li>
+    <li><b>Best for:</b> almost all real deployments, including free tiers.</li>
+  </ul>
+
+  <h3>5.2 Option B — Split deployment (API host + static SPA host)</h3>
+  <div class="diagram">
+    <div class="rowc">
+      <div class="box alt"><b>Static host</b><span>Cloudflare Pages / Netlify / Vercel<br>admin.example.com</span></div>
+      <div class="arrow">&#8594; HTTPS + CORS &#8594;</div>
+      <div class="box"><b>Laravel API host</b><span>Render / Koyeb / VPS<br>api.example.com</span></div>
+    </div>
+    <div class="down">&#8595;</div>
+    <div class="rowc">
+      <div class="box db"><b>Managed MySQL</b></div>
+      <div class="box db"><b>Object storage</b></div>
+    </div>
+  </div>
+  <ul>
+    <li><b>Benefits:</b> SPA on a fast global CDN; independent scaling; matches frontend/backend team split.</li>
+    <li><b>Requirements:</b> create <code>config/cors.php</code>, whitelist the SPA origin, set
+      <code>VITE_API_BASE_URL</code> to the API domain, run with HTTPS — see §7.6.2.</li>
+    <li><b>Best for:</b> when you explicitly want the admin served from a CDN or a separate team owns it.</li>
+  </ul>
+
+  <h3>5.3 Option C — Container platform (single image)</h3>
+  <p>Build one Docker image containing nginx + php-fpm + the compiled storefront <i>and</i> admin SPA,
+  then run it on any container host. Internally identical to Option A, but portable/portable across
+  providers. Steps in §7.2.</p>
+
+  <h3>5.4 Comparison matrix</h3>
+  <table>
+    <tr><th>Criterion</th><th>A — Single origin</th><th>B — Split</th><th>C — Single container</th></tr>
+    <tr><td>Setup complexity</td><td>Low</td><td>Medium</td><td>Medium</td></tr>
+    <tr><td>Needs CORS</td><td>No</td><td><b>Yes</b></td><td>No</td></tr>
+    <tr><td>Independent SPA scaling</td><td>No</td><td>Yes</td><td>No</td></tr>
+    <tr><td>CDN for admin</td><td>Optional</td><td>Yes</td><td>Optional</td></tr>
+    <tr><td>Free-tier friendly</td><td><b>Yes</b></td><td>Yes</td><td>Yes</td></tr>
+    <tr><td>Recommended</td><td><b>&#10003;</b></td><td>Advanced</td><td>Portable</td></tr>
+  </table>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="pb">
+  <h2>6. Platform Recommendations (Free &amp; Paid)</h2>
+
+  <h3>6.1 Application host (Laravel)</h3>
+  <table>
+    <tr><th>Platform</th><th>Free tier</th><th>Notes</th></tr>
+    <tr><td><b>Render</b> (Docker)</td><td>Yes (sleeps when idle)</td><td>Free SSL, easy Docker, cold starts. <span class="tag rec">Recommended</span></td></tr>
+    <tr><td><b>Koyeb</b> (Docker)</td><td>Yes (1 nano)</td><td>Scale-to-zero, Docker-first.</td></tr>
+    <tr><td><b>Railway</b></td><td>Trial credit</td><td>Persistent volumes; not free forever.</td></tr>
+    <tr><td><b>Fly.io</b></td><td>Usage-based</td><td>Global, needs payment method.</td></tr>
+    <tr><td><b>VPS</b> (Hetzner/DigitalOcean)</td><td>No (~&euro;4–6/mo)</td><td>Full control; use the Docker image.</td></tr>
+    <tr><td><b>Shared PHP hosting</b></td><td>Yes</td><td>No SSH/Node; upload prebuilt files only.</td></tr>
+  </table>
+
+  <h3>6.2 Database</h3>
+  <table>
+    <tr><th>Option</th><th>Free</th><th>Notes</th></tr>
+    <tr><td><b>Aiven MySQL</b></td><td>Yes (1 GB)</td><td>Requires TLS; <span class="tag rec">Recommended</span></td></tr>
+    <tr><td><b>TiDB Cloud Serverless</b></td><td>Yes (5 GB)</td><td>MySQL-compatible; TLS.</td></tr>
+    <tr><td><b>SQLite</b></td><td>Yes</td><td>Zero setup; ephemeral on free hosts.</td></tr>
+    <tr><td><b>PlanetScale / RDS</b></td><td>No</td><td>Production-grade managed MySQL.</td></tr>
+  </table>
+
+  <h3>6.3 Admin SPA host (for Option B)</h3>
+  <table>
+    <tr><th>Platform</th><th>Free</th><th>Notes</th></tr>
+    <tr><td><b>Cloudflare Pages</b></td><td>Yes</td><td>Global CDN, free SSL. <span class="tag rec">Recommended</span></td></tr>
+    <tr><td><b>Netlify</b></td><td>Yes</td><td>Simple SPA deploys.</td></tr>
+    <tr><td><b>Vercel</b></td><td>Yes</td><td>Fast; good DX.</td></tr>
+  </table>
+
+  <h3>6.4 File storage</h3>
+  <table>
+    <tr><th>Option</th><th>Free</th><th>Notes</th></tr>
+    <tr><td><b>Cloudflare R2</b></td><td>Yes (10 GB, no egress)</td><td>S3-compatible; <span class="tag rec">Recommended</span></td></tr>
+    <tr><td>Local <code>public</code> disk</td><td>—</td><td>Ephemeral on free hosts; fine for demos.</td></tr>
+    <tr><td>AWS S3 / DO Spaces</td><td>No</td><td>Production standard.</td></tr>
+  </table>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="pb">
+  <h2>7. Step-by-Step Deployment Walkthrough</h2>
+
+  <h3>7.1 Prerequisites</h3>
+  <ul>
+    <li>Source in a remote Git repository (GitHub).</li>
+    <li>A host account (Render/Koyeb) and, optionally, a managed MySQL account (Aiven).</li>
+    <li>Local tools to build assets: Node 20 + npm, and a valid <code>.env.example</code> in place.</li>
+    <li>Optional: an S3/R2 bucket for uploads and an SMTP provider for order emails.</li>
+  </ul>
+
+  <h3>7.2 Build the Laravel application image</h3>
+  <p>Provide a production Dockerfile with three stages: build storefront + admin assets, install
+  Composer deps, then a runtime image with nginx + php-fpm.</p>
+  <pre><code># Stage 1 — assets
+FROM node:20-alpine AS assets
+WORKDIR /app
+COPY package*.json ./ ; RUN npm ci
+COPY resources ./resources ; COPY vite.config.js tailwind.config.js postcss.config.js ./
+RUN npm run build
+WORKDIR /app/backend
+COPY backend/package*.json ./ ; RUN npm ci
+COPY backend/ ./ ; RUN npm run build     # -> backend/dist
+
+# Stage 2 — composer
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --optimize-autoloader
+
+# Stage 3 — runtime
+FROM php:8.2-fpm
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      nginx supervisor unzip libpng-dev libonig-dev libzip-dev libxml2-dev \
+    && docker-php-ext-install pdo_mysql mbstring zip bcmath gd fileinfo \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /var/www
+COPY . .
+COPY --from=vendor /app/vendor ./vendor
+COPY --from=assets /app/public/build ./public/build
+COPY --from=assets /app/backend/dist ./public/admin     # admin SPA at /admin
+COPY docker/production/nginx.conf /etc/nginx/sites-available/default
+COPY docker/production/supervisord.conf /etc/supervisor/conf.d/app.conf
+COPY docker/production/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+    && mkdir -p storage/framework/{cache,sessions,views} bootstrap/cache storage/logs \
+    && chown -R www-data:www-data storage bootstrap/cache
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]</code></pre>
+
+  <h4>Entrypoint (runs on every boot)</h4>
+  <pre><code>#!/bin/sh
+set -e
+php artisan storage:link || true
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+exec supervisord -c /etc/supervisor/conf.d/app.conf   # starts php-fpm + nginx</code></pre>
+
+  <h3>7.3 Deploy the backend</h3>
+  <ol>
+    <li>Push the repo to GitHub.</li>
+    <li><b>Render → New Web Service →</b> connect the repo → <b>Docker</b> → Dockerfile
+      <code>Dockerfile.production</code> → plan <b>Free</b>.</li>
+    <li>Add environment variables (§8), especially <code>APP_KEY</code>, <code>APP_URL</code>,
+      and DB credentials.</li>
+    <li>Deploy. The entrypoint runs migrations automatically.</li>
+    <li>Seed initial data once (Render Shell / one-off job):
+      <pre><code>php artisan db:seed --force
+php artisan db:seed --class=ClothingStoreSeeder --force
+php artisan db:seed --class=BannerAndSettingsSeeder --force</code></pre>
+    </li>
+  </ol>
+
+  <h3>7.4 Database setup</h3>
+  <ul>
+    <li><b>Managed MySQL (recommended):</b> create the DB in Aiven, copy host/port/user/pass/db
+      into env vars. Aiven requires TLS — add the CA option in <code>config/database.php</code>:
+      <pre><code>'options' => extension_loaded('pdo_mysql') ? array_filter([
+    PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+]) : [],</code></pre>
+    </li>
+    <li><b>SQLite (fastest demo):</b> <code>DB_CONNECTION=sqlite</code>,
+      <code>DB_DATABASE=/var/www/database/database.sqlite</code>; <code>touch</code> the file in the
+      entrypoint. Data resets on redeploy on ephemeral hosts.</li>
+  </ul>
+
+  <h3>7.5 File storage setup</h3>
+  <p>Uploads (product images, banners, logos, payment proofs) go through Laravel's filesystem disk.</p>
+  <ul>
+    <li>Default: local <code>public</code> disk → run <code>php artisan storage:link</code> at boot.</li>
+    <li>Persistent: configure the <code>s3</code> disk for Cloudflare R2 and set
+      <code>FILESYSTEM_DISK=s3</code>.</li>
+  </ul>
+</section>
+
+<!-- 7.6 -->
+<section class="pb">
+  <h3>7.6 Interlinking the frontend and backend</h3>
+  <p>This is the part that decides whether your split works. There are two scenarios.</p>
+
+  <h4>7.6.1 Same origin (Option A) — the admin SPA under <code>/admin</code></h4>
+  <p>Change three things so the SPA is served from the Laravel domain at <code>/admin</code>:</p>
+  <p><b>backend/vite.config.js</b></p>
+  <pre><code>export default defineConfig({
+  plugins: [vue()],
+  base: '/admin/',          // served under /admin
+  server: { /* dev proxy unchanged */ },
+})</code></pre>
+  <p><b>backend/src/router/index.js</b></p>
+  <pre><code>const router = createRouter({
+  history: createWebHistory('/admin/'),   // base path
+  routes
+})</code></pre>
+  <p><b>backend/.env.production</b></p>
+  <pre><code>VITE_API_BASE_URL=https://shop.example.com</code></pre>
+  <p>The Docker build copies <code>backend/dist</code> → <code>public/admin</code>, so the SPA and
+  API share the origin. <b>No CORS needed.</b></p>
+
+  <h4>7.6.2 Split origin (Option B) — SPA on a CDN, API elsewhere</h4>
+  <p><b>a) Point the SPA at the API</b> (<code>backend/.env.production</code>):</p>
+  <pre><code>VITE_API_BASE_URL=https://api.example.com</code></pre>
+  <p>Keep the router at root (<code>createWebHistory()</code>, no base) since it is served at the
+  CDN root.</p>
+
+  <p><b>b) Allow the SPA origin in CORS</b> — create <code>config/cors.php</code>:</p>
+  <pre><code>&lt;?php
+return [
+    'paths' =&gt; ['api/*', 'sanctum/csrf-cookie'],
+    'allowed_methods' =&gt; ['*'],
+    'allowed_origins' =&gt; [env('ADMIN_URL', 'https://admin.example.com')],
+    'allowed_headers' =&gt; ['*'],
+    'supports_credentials' =&gt; true,
+];</code></pre>
+  <p>Then set <code>ADMIN_URL=https://admin.example.com</code> on the API host.</p>
+
+  <p><b>c) Trust the platform proxy &amp; force HTTPS URLs</b> — in <code>bootstrap/app.php</code>:</p>
+  <pre><code>-&gt;withMiddleware(function (Middleware $middleware) {
+    $middleware-&gt;trustProxies(at: '*');
+})</code></pre>
+
+  <p><b>d) Build &amp; deploy the SPA</b> as a static site (Cloudflare Pages/Netlify/Vercel):</p>
+  <pre><code>cd backend
+npm ci
+npm run build          # output in backend/dist
+# publish backend/dist (SPA redirect all fallback to index.html)</code></pre>
+
+  <h4>7.6.3 How the pieces find each other (summary)</h4>
+  <table>
+    <tr><th>Link</th><th>Mechanism</th><th>Where set</th></tr>
+    <tr><td>Storefront → Laravel</td><td>Same origin (SSR)</td><td>nginx/web root</td></tr>
+    <tr><td>SPA → API</td><td><code>VITE_API_BASE_URL</code> baked at build</td><td><code>backend/.env.production</code></td></tr>
+    <tr><td>API trusts SPA origin (split only)</td><td><code>config/cors.php</code> + <code>ADMIN_URL</code></td><td>Laravel config/env</td></tr>
+    <tr><td>SPA auth</td><td>Sanctum Bearer token</td><td><code>sessionStorage</code> in SPA</td></tr>
+    <tr><td>Public URLs / HTTPS</td><td><code>APP_URL</code> + <code>trustProxies</code></td><td>env + <code>bootstrap/app.php</code></td></tr>
+    <tr><td>Media served</td><td><code>storage:link</code> or S3/R2 URL</td><td>entrypoint / env</td></tr>
+  </table>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="pb">
+  <h2>8. Environment Variables Matrix</h2>
+
+  <h3>8.1 Laravel backend (<code>.env</code>)</h3>
+  <table>
+    <tr><th>Variable</th><th>Example</th><th>Purpose</th></tr>
+    <tr><td><code>APP_ENV</code></td><td>production</td><td>Disables debug in prod</td></tr>
+    <tr><td><code>APP_DEBUG</code></td><td>false</td><td>Never show stack traces publicly</td></tr>
+    <tr><td><code>APP_KEY</code></td><td>base64:...</td><td>Encryption / sessions</td></tr>
+    <tr><td><code>APP_URL</code></td><td>https://shop.example.com</td><td>URL generation, links</td></tr>
+    <tr><td><code>DB_CONNECTION</code></td><td>mysql / sqlite</td><td>Database driver</td></tr>
+    <tr><td><code>DB_HOST/PORT/DATABASE/USERNAME/PASSWORD</code></td><td>...</td><td>DB credentials</td></tr>
+    <tr><td><code>MYSQL_ATTR_SSL_CA</code></td><td>/etc/ssl/certs/...</td><td>Managed MySQL TLS</td></tr>
+    <tr><td><code>FILESYSTEM_DISK</code></td><td>local / s3</td><td>Upload storage</td></tr>
+    <tr><td><code>AWS_*</code></td><td>bucket/keys/endpoint</td><td>R2/S3 storage</td></tr>
+    <tr><td><code>ADMIN_URL</code></td><td>https://admin.example.com</td><td>CORS (split only)</td></tr>
+    <tr><td><code>LOG_CHANNEL</code></td><td>stderr</td><td>Platform-friendly logs</td></tr>
+    <tr><td><code>MAIL_*</code></td><td>smtp creds</td><td>Order emails</td></tr>
+  </table>
+
+  <h3>8.2 Admin SPA (<code>backend/.env</code>)</h3>
+  <table>
+    <tr><th>Variable</th><th>Example</th><th>Purpose</th></tr>
+    <tr><td><code>VITE_API_BASE_URL</code></td><td>https://api.example.com</td><td>API base for axios</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <b>Never commit <code>.env</code> files.</b> Only <code>.env.example</code> belongs in Git.
+    After editing env vars on a running host, clear caches:
+    <code>php artisan config:clear &amp;&amp; php artisan config:cache</code>.
+  </div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section class="pb">
+  <h2>9. Post-Deployment Verification Checklist</h2>
+  <table>
+    <tr><th>&#10003;</th><th>Check</th></tr>
+    <tr><td>&#9744;</td><td><code>APP_KEY</code> set; <code>APP_DEBUG=false</code>; <code>APP_ENV=production</code></td></tr>
+    <tr><td>&#9744;</td><td>HTTPS active; <code>APP_URL</code> uses <code>https</code>; <code>trustProxies</code> enabled</td></tr>
+    <tr><td>&#9744;</td><td>Migrations ran; catalog + admin seeded</td></tr>
+    <tr><td>&#9744;</td><td><code>storage:link</code> ran; uploads display</td></tr>
+    <tr><td>&#9744;</td><td>Default admin password changed</td></tr>
+    <tr><td>&#9744;</td><td>Storefront: browse → cart → register/verify → checkout → place order</td></tr>
+    <tr><td>&#9744;</td><td>Pay page loads; proof upload stored; admin can view proof</td></tr>
+    <tr><td>&#9744;</td><td>Admin SPA: login → each section loads (Products, Orders, Settings, Payment Methods)</td></tr>
+    <tr><td>&#9744;</td><td>(Split) CORS returns the SPA origin; preflight <code>OPTIONS</code> OK</td></tr>
+    <tr><td>&#9744;</td><td>(Split) <code>VITE_API_BASE_URL</code> matches the deployed API domain</td></tr>
+    <tr><td>&#9744;</td><td>Upload persistence strategy chosen (local ephemeral vs R2/S3)</td></tr>
+    <tr><td>&#9744;</td><td>SMTP configured if order emails are required</td></tr>
+  </table>
+</section>
+
+<!-- ============ APPENDIX A ============ -->
+<section class="pb">
+  <h2>Appendix A — Route Map</h2>
+
+  <h3>A.1 Storefront (web)</h3>
+  <table>
+    <tr><th>Method</th><th>URI</th><th>Name</th><th>Purpose</th></tr>
+    <tr><td>GET</td><td>/</td><td>home</td><td>Home (banners, categories, products)</td></tr>
+    <tr><td>GET</td><td>/category/{slug}</td><td>byCategory</td><td>Category listing</td></tr>
+    <tr><td>GET</td><td>/product/{slug}</td><td>product.view</td><td>Product detail</td></tr>
+    <tr><td>GET/POST</td><td>/cart, /cart/add, /cart/remove, /cart/update-quantity</td><td>cart.*</td><td>Cart operations</td></tr>
+    <tr><td>GET/POST</td><td>/profile, /profile/password-update</td><td>profile*</td><td>Profile &amp; addresses</td></tr>
+    <tr><td>GET/POST</td><td>/checkout, /checkout/place, /checkout/placed/{order}</td><td>checkout*</td><td>Checkout &amp; order placement</td></tr>
+    <tr><td>GET/POST</td><td>/orders, /orders/{order}, /orders/{order}/pay</td><td>order.*</td><td>My orders &amp; payment proof</td></tr>
+    <tr><td>—</td><td>/register, /login, /forgot-password, /verify-email, ...</td><td>—</td><td>Breeze auth</td></tr>
+  </table>
+
+  <h3>A.2 Admin API (<code>/api</code>, Sanctum + admin)</h3>
+  <table>
+    <tr><th>Method</th><th>URI</th><th>Purpose</th></tr>
+    <tr><td>POST</td><td>/api/login</td><td>Admin login → token</td></tr>
+    <tr><td>GET</td><td>/api/user</td><td>Current admin</td></tr>
+    <tr><td>POST</td><td>/api/logout</td><td>Revoke token</td></tr>
+    <tr><td>CRUD</td><td>/api/products · /api/users · /api/customers · /api/categories (+/tree) · /api/banners · /api/payment-methods</td><td>Admin management</td></tr>
+    <tr><td>GET/PUT</td><td>/api/settings</td><td>Business settings</td></tr>
+    <tr><td>GET</td><td>/api/countries</td><td>Country list</td></tr>
+    <tr><td>GET/POST</td><td>/api/orders, /api/orders/{order}, change-status, change-payment-status</td><td>Orders &amp; statuses</td></tr>
+    <tr><td>GET</td><td>/api/dashboard/* · /api/report/*</td><td>Dashboard &amp; reports</td></tr>
+  </table>
+</section>
+
+<!-- ============ APPENDIX B ============ -->
+<section class="pb">
+  <h2>Appendix B — Data Model</h2>
+  <pre><code>users (id, name, email, password, is_admin, email_verified_at)
+  └─1:1─ customers (PK user_id, first_name, last_name, phone, status)
+            └─1:N─ customer_addresses (type, address..., country_code → countries.code)
+
+users 1:N orders
+orders (id, total_price, status, created_by, updated_by)
+  ├─1:N─ order_items (order_id, product_id, quantity, unit_price)
+  └─1:1─ payments (order_id, amount, status, type, session_id, payment_proof)
+
+categories (id, name, slug, active, parent_id[self], image)
+  └─N:M─ products  (pivot: product_categories)
+
+products (id, title, slug, description, price, quantity, published)
+  └─1:N─ product_images (product_id, path, url, mime, size, position)
+
+cart_items (user_id, product_id, quantity)
+banners (title, kicker, text, image_url, link_label, link_url, position, sort_order, active)
+settings (key, value)
+payment_methods (name, code, description, details, is_active, sort_order)
+countries (code PK, name, states json)
+personal_access_tokens (Sanctum)</code></pre>
+
+  <h3>Enums</h3>
+  <ul>
+    <li><b>OrderStatus:</b> unpaid, processing, paid, cancelled, shipped, completed</li>
+    <li><b>PaymentStatus:</b> pending, paid, failed</li>
+    <li><b>AddressType:</b> shipping, billing</li>
+    <li><b>CustomerStatus:</b> active, disabled</li>
+  </ul>
+
+  <div class="callout ok">
+    <b>End of document.</b> For local development, storefront flow, seeder details and testing,
+    see the companion <i>Website Documentation</i> and <i>Free Hosting &amp; Launch Guide</i>.
+  </div>
+</section>
+
+</div>
+</body>
+</html>
