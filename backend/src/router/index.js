@@ -157,7 +157,8 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  // Matches the /admin base configured in vite.config.js.
+  history: createWebHistory('/admin/'),
   routes
 })
 

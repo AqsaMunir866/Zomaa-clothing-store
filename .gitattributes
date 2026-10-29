@@ -1,5 +1,9 @@
 * text=auto
 
+# Container scripts/config must keep LF endings, even on Windows checkouts.
+*.sh text eol=lf
+docker/** text eol=lf
+
 *.blade.php diff=html
 *.css diff=css
 *.html diff=html

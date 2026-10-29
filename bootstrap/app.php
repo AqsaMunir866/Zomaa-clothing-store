@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Render terminates TLS at its proxy; trust its forwarded headers.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'guestOrVerified' => GuestOrVerified::class,
             'admin' => Admin::class

@@ -6,12 +6,14 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class ClothingStoreSeeder extends Seeder
 {
     public function run()
     {
-        $adminId = 1;
+        // Don't assume the admin is user #1 (it isn't if the DB already has users).
+        $adminId = \App\Models\User::where('is_admin', true)->value('id') ?? 1;
 
         $categories = [
             'Men' => ['T-Shirts', 'Shirts', 'Jeans', 'Jackets'],
@@ -77,6 +79,19 @@ class ClothingStoreSeeder extends Seeder
 
             if (!$product->images()->exists()) {
                 $path = 'images/products/' . $image . '.jpg';
+
+                // Demo installs don't ship per-product photos; fall back to the
+                // category artwork so seeded cards never show a broken image.
+                if (!file_exists(storage_path('app/public/' . $path))) {
+                    foreach (['jpg', 'png'] as $extension) {
+                        $fallback = 'categories/' . Str::slug($childName) . '.' . $extension;
+                        if (file_exists(storage_path('app/public/' . $fallback))) {
+                            $path = $fallback;
+                            break;
+                        }
+                    }
+                }
+
                 ProductImage::create([
                     'product_id' => $product->id,
                     'path' => $path,

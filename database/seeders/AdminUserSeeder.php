@@ -15,12 +15,15 @@ class AdminUserSeeder extends Seeder
      */
     public function run()
     {
-        User::create([
-            'name' => 'Admin',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('admin123'),
-            'email_verified_at' => now(),
-            'is_admin' => true
-        ]);
+        // Safe to run on every deploy: never overwrites an existing admin.
+        User::firstOrCreate(
+            ['email' => env('ADMIN_EMAIL', 'admin@example.com')],
+            [
+                'name' => 'Admin',
+                'password' => bcrypt(env('ADMIN_PASSWORD', 'admin123')),
+                'email_verified_at' => now(),
+                'is_admin' => true,
+            ]
+        );
     }
 }

@@ -30,6 +30,8 @@ class CountrySeeder extends Seeder
             ['code' => 'usa', 'name' => 'United States of America', 'states' => json_encode($usaStates)],
             ['code' => 'ger', 'name' => 'Germany', 'states' => null],
         ];
-        Country::insert($countries);
+        foreach ($countries as $country) {
+            Country::updateOrCreate(['code' => $country['code']], $country);
+        }
     }
 }
