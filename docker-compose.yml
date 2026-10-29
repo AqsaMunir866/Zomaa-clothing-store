@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     image: laravel-vue-app
     container_name: laravel_app
     restart: unless-stopped

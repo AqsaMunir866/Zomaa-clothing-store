@@ -120,7 +120,7 @@ Add this to **`config/database.php`** under the `mysql` connection so Aiven TLS 
 
 ### 2.4 Production `Dockerfile` (multi-stage, nginx + php-fpm)
 
-Create **`Dockerfile.production`** in the repo root:
+Create **`Dockerfile`** in the repo root (the dev-only one is `Dockerfile.dev`):
 ```dockerfile
 # ---- 1. Build frontend assets ----
 FROM node:20-alpine AS assets
@@ -214,7 +214,7 @@ services:
   - type: web
     name: maison-blanc
     runtime: docker
-    dockerfilePath: ./Dockerfile.production
+    dockerfilePath: ./Dockerfile
     plan: free
     healthCheckPath: /up
     envVars:
@@ -250,13 +250,8 @@ services:
    git push origin main
    ```
 2. **Create the free MySQL** at **Aiven** (service type MySQL, plan `Free`, pick a nearby region). Copy host, port, user (`avnadmin`), password, database (`defaultdb`).
-3. **Render → New → Web Service → connect your repo.** Choose **Docker**, set the Dockerfile to `Dockerfile.production`, plan **Free**. Add all env vars from §2.3.
-4. **First deploy** runs `migrate --force`. Then seed the catalog/admin once (Render Shell or a one‑off Job):
-   ```bash
-   php artisan db:seed --force
-   php artisan db:seed --class=ClothingStoreSeeder --force
-   php artisan db:seed --class=BannerAndSettingsSeeder --force
-   ```
+3. **Render → New → Web Service → connect your repo.** Choose **Docker**, use the default `./Dockerfile`, plan **Free**. Add all env vars from §2.3.
+4. **First deploy** runs `migrate --force`. Render's free plan has no Shell and no one-off jobs, so seed by setting `RUN_SEED=true` for the first deploy, then change it back to `false`. See `docs/RENDER_AIVEN_DEPLOY.md`.
 5. Open `https://your-app.onrender.com` (storefront) and `/admin` (login `admin@example.com / admin123`).
 
 > Render free web services **sleep after ~15 min idle** and cold‑start in ~30–60 s. Acceptable for a demo; upgrade or keep‑alive pings if not.

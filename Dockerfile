@@ -1,27 +1,69 @@
-FROM php:8.2-fpm
+# syntax=docker/dockerfile:1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    libzip-dev
+# ---------- 1. Storefront (Laravel Blade + Vite) ----------
+FROM node:20-alpine AS storefront
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY resources ./resources
+COPY public ./public
+COPY vite.config.js tailwind.config.js postcss.config.js ./
+RUN npm run build
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# ---------- 2. Admin SPA (Vue 3 + Vite) ----------
+FROM node:20-alpine AS admin
+WORKDIR /app/backend
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci
+COPY backend/ ./
+RUN npm run build
 
-# Install PHP extensions required by Laravel
-RUN docker-php-ext-install pdo_mysql mbstring zip bcmath gd fileinfo
+# ---------- 3. PHP dependencies ----------
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-scripts \
+    --prefer-dist \
+    --optimize-autoloader \
+    --ignore-platform-reqs
 
-# Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# ---------- 4. Runtime: nginx + php-fpm + supervisor ----------
+FROM php:8.2-fpm-alpine
 
-# Set working directory
+RUN apk add --no-cache \
+        nginx supervisor ca-certificates \
+        libpng libjpeg-turbo freetype libzip oniguruma \
+    && apk add --no-cache --virtual .build-deps \
+        $PHPIZE_DEPS icu-dev libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev oniguruma-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring zip bcmath gd opcache \
+    && apk del .build-deps \
+    && rm -rf /var/cache/apk/*
+
 WORKDIR /var/www
 
-EXPOSE 9000
-CMD ["php-fpm"]
+COPY . .
+COPY --from=vendor /app/vendor ./vendor
+COPY --from=storefront /app/public/build ./public/build
+COPY --from=admin /app/backend/dist ./public/admin
+
+COPY docker/production/nginx.conf /etc/nginx/http.d/default.conf.template
+COPY docker/production/supervisord.conf /etc/supervisord.conf
+COPY docker/production/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+    && mkdir -p \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+        bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache
+
+ENV PORT=8080
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

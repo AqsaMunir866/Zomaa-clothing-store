@@ -4,13 +4,13 @@ Production setup for this repo:
 
 | Piece | What runs |
 |---|---|
-| `Dockerfile.production` | nginx + php-fpm + supervisor, built on Render |
+| `Dockerfile` | nginx + php-fpm + supervisor, built on Render (default path, no setting needed) |
 | `docker/production/` | nginx site config, supervisord, container entrypoint |
 | Storefront | Laravel Blade at `/` |
 | Admin SPA | Vue 3 at `/admin` (same origin, no CORS) |
 | Database | Aiven for MySQL, pre-created `defaultdb` |
 
-The existing `Dockerfile` and `docker-compose.yml` are untouched and still work for local development.
+`Dockerfile.dev` and `docker-compose.yml` are the local development setup; they are not used by Render.
 
 ---
 
@@ -32,7 +32,7 @@ git push origin main
 
 Files that must be in the repo:
 
-- `Dockerfile.production`
+- `Dockerfile`
 - `.dockerignore`
 - `docker/production/nginx.conf`
 - `docker/production/supervisord.conf`
@@ -60,13 +60,13 @@ Database name: `defaultdb` — do not create another one.
 1. <https://dashboard.render.com> → **New** → **Web Service**.
 2. Connect the GitHub repo `Zomaa-clothing-store`, branch `main`.
 3. **Language / Runtime**: `Docker`.
-4. **Dockerfile Path**: `./Dockerfile.production`
+4. **Dockerfile Path**: leave the default `./Dockerfile` (production image).
 5. **Region**: pick the one closest to your Aiven service.
 6. **Instance Type**: `Free`.
 7. **Health Check Path**: `/up`
 8. Do **not** set a start command — the image entrypoint starts nginx + php-fpm.
 
-If the service already exists: **Settings → Build & Deploy → Dockerfile Path** → set `./Dockerfile.production`, then **Settings → Health Checks** → `/up`.
+If the service already exists, no Dockerfile setting is needed — Render builds the repo's root `Dockerfile`. Just confirm the runtime is **Docker** (it is shown at the top of the service page) and set **Settings → Health Checks** to `/up`.
 
 ---
 
