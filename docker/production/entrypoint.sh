@@ -19,6 +19,26 @@ else
     echo "[entrypoint] DB_PASSWORD is set (${#DB_PASSWORD} characters)."
 fi
 
+# Secret files are often mounted root-only. Root can still run migrations while
+# php-fpm (www-data) cannot read the CA, so every page that touches the database
+# fails at runtime. Copy it somewhere the web user can read, before config:cache.
+if [ -n "${MYSQL_ATTR_SSL_CA}" ]; then
+    if [ -f "${MYSQL_ATTR_SSL_CA}" ]; then
+        if cp "${MYSQL_ATTR_SSL_CA}" /usr/local/share/db-ca.pem 2>/dev/null; then
+            chmod 644 /usr/local/share/db-ca.pem
+            export MYSQL_ATTR_SSL_CA=/usr/local/share/db-ca.pem
+            echo "[entrypoint] SSL CA: copied to ${MYSQL_ATTR_SSL_CA} (readable by www-data)."
+        else
+            echo "[entrypoint] WARNING: cannot copy ${MYSQL_ATTR_SSL_CA}; leaving it unchanged." >&2
+        fi
+    else
+        echo "[entrypoint] WARNING: MYSQL_ATTR_SSL_CA is set but ${MYSQL_ATTR_SSL_CA} does not exist; connecting without a CA." >&2
+        unset MYSQL_ATTR_SSL_CA
+    fi
+else
+    echo "[entrypoint] WARNING: MYSQL_ATTR_SSL_CA is not set; Aiven requires TLS, so connections may be refused." >&2
+fi
+
 # Render injects PORT; nginx cannot read env vars directly, so render the template.
 PORT="${PORT:-8080}"
 sed "s/__PORT__/${PORT}/g" /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf
@@ -54,6 +74,15 @@ done
 php artisan config:cache
 php artisan route:cache || true
 php artisan view:cache || true
+
+# Root could reach MySQL while the web user cannot (file permissions, CA paths).
+# Prove the web user's connection here instead of discovering it as a 500 later.
+if su -s /bin/sh www-data -c 'php artisan migrate:status --no-ansi' >/tmp/dbprobe.log 2>&1; then
+    echo "[entrypoint] DB check as www-data: OK"
+else
+    echo "[entrypoint] ERROR: MySQL is unreachable as www-data, so every page will return 500:" >&2
+    head -n 25 /tmp/dbprobe.log >&2
+fi
 
 # Optional first-deploy seeding (set RUN_SEED=true once, then false).
 if [ "${RUN_SEED:-false}" = "true" ]; then
