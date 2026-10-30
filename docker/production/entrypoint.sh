@@ -27,8 +27,22 @@ chown -R www-data:www-data storage bootstrap/cache
 php artisan storage:link || true
 php artisan package:discover --ansi || true
 
-# Schema must exist before the app starts.
-php artisan migrate --force
+# Schema must exist before the app starts. Managed MySQL can be briefly
+# unreachable while it wakes up, so retry instead of failing the deploy.
+attempt=1
+while true; do
+    if php artisan migrate --force; then
+        break
+    fi
+    if [ "$attempt" -ge 8 ]; then
+        echo "[entrypoint] ERROR: migrations failed after ${attempt} attempts." >&2
+        echo "[entrypoint] Check DB_HOST, DB_PORT, DB_PASSWORD and that the Aiven service is powered on." >&2
+        exit 1
+    fi
+    echo "[entrypoint] Migration attempt ${attempt} failed; retrying in 10s..." >&2
+    attempt=$((attempt + 1))
+    sleep 10
+done
 
 php artisan config:cache
 php artisan route:cache || true
