@@ -166,6 +166,9 @@ Secret file must be named exactly `ca.pem` and `MYSQL_ATTR_SSL_CA` must be `/etc
 **500 after deploy**
 Set `APP_DEBUG=true` temporarily to see the error, then set it back to `false`. Also check that `APP_KEY` is set.
 
+**`General error: 3750 ... sql_require_primary_key`**
+Aiven (and any managed MySQL with `sql_require_primary_key=1`) rejects tables without a primary key. Add one to the migration, e.g. `$table->string('email')->primary();` for `password_resets`. Every new `Schema::create` must define `id()` or an explicit primary key.
+
 **`No application encryption key has been specified`**
 `APP_KEY` missing or the value was pasted without the `base64:` prefix.
 

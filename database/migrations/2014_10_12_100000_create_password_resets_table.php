@@ -14,7 +14,9 @@ return new class extends Migration
     public function up()
     {
         Schema::create('password_resets', function (Blueprint $table) {
-            $table->string('email')->index();
+            // Managed MySQL (Aiven) sets sql_require_primary_key=1, so every
+            // table needs a primary key. One reset token per email address.
+            $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
