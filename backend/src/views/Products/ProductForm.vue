@@ -19,10 +19,10 @@
           <treeselect v-model="product.categories" :multiple="true" :options="options" :errors="errors['categories']"/>
         </div>
         <div class="col-span-1 px-4 pt-5 pb-4">
-          <image-preview v-model="product.images"
-                         :images="product.images"
-                         v-model:deleted-images="product.deleted_images"
-                         v-model:image-positions="product.image_positions"/>
+          <image-preview :images="existingImages"
+                         v-model:files="newFiles"
+                         v-model:deleted-images="deletedImages"
+                         v-model:image-order="imageOrder"/>
         </div>
       </div>
       <footer class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
@@ -66,15 +66,17 @@ const router = useRouter()
 const product = ref({
   id: null,
   title: null,
-  images: [],
-  deleted_images: [],
-  image_positions: {},
   description: '',
   price: null,
   quantity: null,
   published: false,
   categories: []
 })
+
+const existingImages = ref([])
+const newFiles = ref([])
+const deletedImages = ref([])
+const imageOrder = ref([])
 
 const errors = ref({});
 
@@ -90,6 +92,7 @@ onMounted(() => {
       .then((response) => {
         loading.value = false;
         product.value = response.data
+        existingImages.value = response.data.images || []
       })
   }
 
@@ -103,12 +106,28 @@ function onSubmit($event, close = false) {
   loading.value = true
   errors.value = {};
   product.value.quantity = product.value.quantity || null
+
+  const payload = {
+    ...product.value,
+    images: newFiles.value,
+    deleted_images: deletedImages.value,
+    image_order: imageOrder.value,
+  }
+
+  const saved = (response) => {
+    loading.value = false;
+    product.value = response.data
+    existingImages.value = response.data.images || []
+    newFiles.value = []
+    deletedImages.value = []
+    imageOrder.value = []
+  }
+
   if (product.value.id) {
-    store.dispatch('updateProduct', product.value)
+    store.dispatch('updateProduct', payload)
       .then(response => {
-        loading.value = false;
+        saved(response)
         if (response.status === 200) {
-          product.value = response.data
           store.commit('showToast', 'Product was successfully updated');
           store.dispatch('getProducts')
           if (close) {
@@ -121,17 +140,15 @@ function onSubmit($event, close = false) {
         errors.value = err.response.data.errors
       })
   } else {
-    store.dispatch('createProduct', product.value)
+    store.dispatch('createProduct', payload)
       .then(response => {
-        loading.value = false;
+        saved(response)
         if (response.status === 201) {
-          product.value = response.data
           store.commit('showToast', 'Product was successfully created');
           store.dispatch('getProducts')
           if (close) {
             router.push({name: 'app.products'})
           } else {
-            product.value = response.data
             router.push({name: 'app.products.edit', params: {id: response.data.id}})
           }
         }

@@ -11,6 +11,7 @@ use App\Models\ProductCategory;
 use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -49,17 +50,21 @@ class ProductController extends Controller
         $data['created_by'] = $request->user()->id;
         $data['updated_by'] = $request->user()->id;
 
-        /** @var \Illuminate\Http\UploadedFile[] $images */
         $images = $data['images'] ?? [];
-        $imagePositions = $data['image_positions'] ?? [];
+        $imageOrder = $data['image_order'] ?? [];
         $categories = $data['categories'] ?? [];
+        unset($data['images'], $data['image_order'], $data['deleted_images']);
 
-        $product = Product::create($data);
+        $product = DB::transaction(function () use ($data, $images, $imageOrder, $categories) {
+            $product = Product::create($data);
 
-        $this->saveCategories($categories, $product);
-        $this->saveImages($images, $imagePositions, $product);
+            $this->saveCategories($categories, $product);
+            $this->syncImages($product, $images, $imageOrder, []);
 
-        return new ProductResource($product);
+            return $product;
+        });
+
+        return new ProductResource($product->load('images'));
     }
 
     /**
@@ -85,21 +90,20 @@ class ProductController extends Controller
         $data = $request->validated();
         $data['updated_by'] = $request->user()->id;
 
-        /** @var \Illuminate\Http\UploadedFile[] $images */
         $images = $data['images'] ?? [];
         $deletedImages = $data['deleted_images'] ?? [];
-        $imagePositions = $data['image_positions'] ?? [];
+        $imageOrder = $data['image_order'] ?? [];
         $categories = $data['categories'] ?? [];
+        unset($data['images'], $data['image_order'], $data['deleted_images']);
 
-        $this->saveCategories($categories, $product);
-        $this->saveImages($images, $imagePositions, $product);
-        if (count($deletedImages) > 0) {
-            $this->deleteImages($deletedImages, $product);
-        }
+        DB::transaction(function () use ($product, $data, $images, $imageOrder, $deletedImages, $categories) {
+            $this->saveCategories($categories, $product);
+            $this->syncImages($product, $images, $imageOrder, $deletedImages);
 
-        $product->update($data);
+            $product->update($data);
+        });
 
-        return new ProductResource($product);
+        return new ProductResource($product->load('images'));
     }
 
     /**
@@ -124,59 +128,132 @@ class ProductController extends Controller
     }
 
     /**
+     * Reconcile the product's images with what the admin form submitted.
      *
-     *
-     * @param UploadedFile[] $images
-     * @return string
-     * @throws \Exception
-     * @author Zura Sekhniashvili <zurasekhniashvili@gmail.com>
+     * @param \Illuminate\Http\UploadedFile[] $images new uploads, in display order
+     * @param string[]                        $order  display order: "existing:<id>" / "new:<uploadIndex>"
+     * @param int[]                           $deletedIds images the admin removed
      */
-    private function saveImages($images, $positions, Product $product)
+    private function syncImages(Product $product, array $images, array $order, array $deletedIds)
     {
-        foreach ($positions as $id => $position) {
-            if (!is_numeric($id)) {
-                continue;
+        $existing = $product->images()->get()->keyBy('id');
+
+        // Older clients send no order: keep existing images, append the uploads.
+        if (empty($order)) {
+            $order = $existing->keys()
+                ->reject(fn($id) => in_array($id, array_map('intval', $deletedIds), true))
+                ->map(fn($id) => "existing:{$id}")
+                ->values()
+                ->all();
+
+            foreach (array_keys($images) as $index) {
+                $order[] = "new:{$index}";
             }
-            ProductImage::query()
-                ->where('id', $id)
-                ->update(['position' => $position]);
         }
 
-        foreach ($images as $id => $image) {
-            $path = 'images/' . Str::random();
-            if (!Storage::exists($path)) {
-                Storage::makeDirectory($path, 0755, true);
-            }
-            $name = Str::random().'.'.$image->getClientOriginalExtension();
-            if (!Storage::putFileAS('public/' . $path, $image, $name)) {
-                throw new \Exception("Unable to save file \"{$image->getClientOriginalName()}\"");
-            }
-            $relativePath = $path . '/' . $name;
+        $keptIds = [];
 
-            ProductImage::create([
-                'product_id' => $product->id,
-                'path' => $relativePath,
-                'url' => URL::to(Storage::url($relativePath)),
-                'mime' => $image->getClientMimeType(),
-                'size' => $image->getSize(),
-                'position' => $positions[$id] ?? $id + 1
-            ]);
+        foreach ($order as $position => $token) {
+            $separator = strpos($token, ':');
+            if ($separator === false) {
+                continue;
+            }
+
+            [$type, $value] = [substr($token, 0, $separator), substr($token, $separator + 1)];
+
+            if ($type === 'existing') {
+                $id = (int)$value;
+                if (in_array($id, array_map('intval', $deletedIds), true)) {
+                    continue;
+                }
+                $image = $existing->get($id);
+                if (!$image) {
+                    continue;
+                }
+                $keptIds[] = $id;
+                $this->moveImageToPosition($image, $position + 1);
+            } elseif ($type === 'new' && isset($images[(int)$value])) {
+                $file = $images[(int)$value];
+                if ($file instanceof UploadedFile) {
+                    $this->storeImage($product, $file, $position + 1);
+                }
+                unset($images[(int)$value]);
+            }
+        }
+
+        // Anything the form no longer shows is removed, row and file.
+        foreach ($existing as $id => $image) {
+            if (!in_array($id, $keptIds, true)) {
+                $this->deleteImage($image);
+            }
+        }
+
+        // Safety net: uploads the client did not place explicitly.
+        $position = (int)$product->images()->max('position');
+        foreach ($images as $file) {
+            if ($file instanceof UploadedFile) {
+                $position++;
+                $this->storeImage($product, $file, $position);
+            }
+        }
+
+        $this->renumberImages($product);
+    }
+
+    private function moveImageToPosition(ProductImage $image, int $position)
+    {
+        if ((int)$image->position !== $position) {
+            $image->update(['position' => $position]);
         }
     }
 
-    private function deleteImages($imageIds, Product $product)
+    /**
+     * Keep positions as 1..n so ordering never depends on ties or gaps.
+     */
+    private function renumberImages(Product $product)
     {
-        $images = ProductImage::query()
-            ->where('product_id', $product->id)
-            ->whereIn('id', $imageIds)
-            ->get();
+        $images = $product->images()->get();
+        $position = 0;
 
         foreach ($images as $image) {
-            // If there is an old image, delete it
-            if ($image->path) {
-                Storage::deleteDirectory('/public/' . dirname($image->path));
+            $position++;
+            if ((int)$image->position !== $position) {
+                $image->update(['position' => $position]);
             }
-            $image->delete();
         }
+    }
+
+    private function storeImage(Product $product, UploadedFile $file, int $position)
+    {
+        $directory = 'images/' . Str::random();
+        $extension = $file->getClientOriginalExtension() ?: $file->extension() ?: 'bin';
+        $name = Str::random() . '.' . strtolower($extension);
+
+        if (!Storage::disk('public')->putFileAs($directory, $file, $name)) {
+            throw new \Exception("Unable to save file \"{$file->getClientOriginalName()}\"");
+        }
+
+        $path = $directory . '/' . $name;
+
+        ProductImage::create([
+            'product_id' => $product->id,
+            'path' => $path,
+            'url' => URL::to(Storage::disk('public')->url($path)),
+            'mime' => $file->getClientMimeType(),
+            'size' => $file->getSize(),
+            'position' => $position,
+        ]);
+    }
+
+    private function deleteImage(ProductImage $image)
+    {
+        if ($image->path) {
+            $directory = dirname($image->path);
+            if ($directory !== '.' && $directory !== '') {
+                Storage::disk('public')->deleteDirectory($directory);
+            }
+        }
+
+        $image->delete();
     }
 }

@@ -82,48 +82,39 @@ export function getProduct({commit}, id) {
 }
 
 export function createProduct({commit}, product) {
-  if (product.images && product.images.length) {
-    const form = new FormData();
-    form.append('title', product.title);
-    product.images.forEach(im => form.append(`images[]`, im))
-    if (product.categories) {
-      product.categories.forEach(c => form.append('categories[]', c))
-    }
-    form.append('description', product.description || '');
-    form.append('published', product.published ? 1 : 0);
-    form.append('price', product.price);
-    form.append('quantity', product.quantity ?? '');
-    product = form;
+  const form = new FormData();
+  form.append('title', product.title);
+  (product.images || []).forEach(im => form.append('images[]', im));
+  (product.image_order || []).forEach(token => form.append('image_order[]', token));
+  if (product.categories) {
+    product.categories.forEach(c => form.append('categories[]', c))
   }
-  return axiosClient.post('/products', product)
+  form.append('description', product.description || '');
+  form.append('published', product.published ? 1 : 0);
+  form.append('price', product.price);
+  form.append('quantity', product.quantity ?? '');
+
+  return axiosClient.post('/products', form)
 }
 
 export function updateProduct({commit}, product) {
   const id = product.id
-  if (product.images && product.images.length) {
-    const form = new FormData();
-    form.append('id', product.id);
-    form.append('title', product.title);
-    product.images.forEach(im => form.append(`images[${im.id}]`, im))
-    if (product.deleted_images) {
-      product.deleted_images.forEach(id => form.append('deleted_images[]', id))
-    }
-    for (let id in product.image_positions) {
-      form.append(`image_positions[${id}]`, product.image_positions[id])
-    }
-    if (product.categories) {
-      product.categories.forEach(c => form.append('categories[]', c))
-    }
-    form.append('description', product.description || '');
-    form.append('published', product.published ? 1 : 0);
-    form.append('price', product.price);
-    form.append('quantity', product.quantity ?? '');
-    form.append('_method', 'PUT');
-    product = form;
-  } else {
-    product._method = 'PUT'
+  const form = new FormData();
+  form.append('id', product.id);
+  form.append('title', product.title);
+  (product.images || []).forEach(im => form.append('images[]', im));
+  (product.image_order || []).forEach(token => form.append('image_order[]', token));
+  (product.deleted_images || []).forEach(imageId => form.append('deleted_images[]', imageId));
+  if (product.categories) {
+    product.categories.forEach(c => form.append('categories[]', c))
   }
-  return axiosClient.post(`/products/${id}`, product)
+  form.append('description', product.description || '');
+  form.append('published', product.published ? 1 : 0);
+  form.append('price', product.price);
+  form.append('quantity', product.quantity ?? '');
+  form.append('_method', 'PUT');
+
+  return axiosClient.post(`/products/${id}`, form)
 }
 
 export function deleteProduct({commit}, id) {
