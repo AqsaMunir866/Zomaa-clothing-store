@@ -12,6 +12,13 @@ elif [ "${#APP_KEY}" -ne 51 ]; then
 fi
 echo "[entrypoint] Database target: ${DB_USERNAME:-<unset>}@${DB_HOST:-<unset>}:${DB_PORT:-3306}/${DB_DATABASE:-<unset>}"
 
+# Never log the secret itself, only whether it arrived.
+if [ -z "${DB_PASSWORD}" ]; then
+    echo "[entrypoint] ERROR: DB_PASSWORD is empty - MySQL will reject the login with 'using password: NO'." >&2
+else
+    echo "[entrypoint] DB_PASSWORD is set (${#DB_PASSWORD} characters)."
+fi
+
 # Render injects PORT; nginx cannot read env vars directly, so render the template.
 PORT="${PORT:-8080}"
 sed "s/__PORT__/${PORT}/g" /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf
