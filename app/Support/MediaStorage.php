@@ -16,8 +16,8 @@ use Illuminate\Support\Str;
  *   images/k8s2n1p9q0x7/yT4m...jpg    <- upload, one random folder per file
  *   categories/t-shirts.jpg           <- seeded artwork, shipped with the repo
  *
- * Only the three-segment upload paths are ever deleted; seeded artwork keeps
- * working for every product that references it.
+ * Only paths inside a private upload folder are removed; seeded category
+ * artwork is shared and is never deleted.
  */
 class MediaStorage
 {
@@ -57,14 +57,22 @@ class MediaStorage
                 break;
 
             case self::S3:
-                Storage::disk('s3')->put($path, file_get_contents($file->getRealPath()), [
+                $stored = Storage::disk('s3')->put($path, file_get_contents($file->getRealPath()), [
                     'visibility' => 'public',
                     'ContentType' => $mime,
                 ]);
+
+                if (!$stored) {
+                    throw new \RuntimeException("Unable to save file \"{$file->getClientOriginalName()}\"");
+                }
                 break;
 
             default:
-                Storage::disk('public')->putFileAs(dirname($path), $file, basename($path));
+                $stored = Storage::disk('public')->putFileAs(dirname($path), $file, basename($path));
+
+                if (!$stored) {
+                    throw new \RuntimeException("Unable to save file \"{$file->getClientOriginalName()}\"");
+                }
                 break;
         }
 
