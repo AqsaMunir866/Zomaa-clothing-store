@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\MediaStorage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Facades\Storage;
 
 class Payment extends Model
 {
@@ -20,6 +20,8 @@ class Payment extends Model
 
     public function getProofUrlAttribute(): ?string
     {
-        return $this->payment_proof ? Storage::disk('public')->url($this->payment_proof) : null;
+        return $this->payment_proof
+            ? app(MediaStorage::class)->storedUrl($this->payment_proof)
+            : null;
     }
 }

@@ -1,2 +1,18 @@
 *
 !.gitignore
+
+# Seed artwork ships with the repository so a fresh deploy has real product
+# pictures. Everything else (product uploads, banners, payment proofs) is
+# ignored because those are created at runtime.
+!categories/
+!categories/*.jpg
+!categories/*.jpeg
+!categories/*.png
+!categories/*.webp
+
+!logos/
+!logos/*.jpg
+!logos/*.jpeg
+!logos/*.png
+!logos/*.svg
+!logos/*.webp

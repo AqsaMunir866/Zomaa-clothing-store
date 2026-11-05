@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\PaymentMethod;
+use App\Support\MediaStorage;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -69,10 +70,11 @@ class OrderController extends Controller
         ]);
 
         if ($payment->payment_proof) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($payment->payment_proof);
+            app(MediaStorage::class)->delete($payment->payment_proof);
         }
 
-        $payment->payment_proof = $request->file('payment_proof')->store('payment-proofs', 'public');
+        $media = app(MediaStorage::class)->put($request->file('payment_proof'), 'payment-proofs');
+        $payment->payment_proof = $media['path'];
         $payment->save();
 
         return redirect()->route('order.view', $order)

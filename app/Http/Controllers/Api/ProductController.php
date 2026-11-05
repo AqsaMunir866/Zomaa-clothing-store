@@ -9,12 +9,10 @@ use App\Http\Resources\ProductResource;
 use App\Models\Api\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductImage;
+use App\Support\MediaStorage;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -225,34 +223,21 @@ class ProductController extends Controller
 
     private function storeImage(Product $product, UploadedFile $file, int $position)
     {
-        $directory = 'images/' . Str::random();
-        $extension = $file->getClientOriginalExtension() ?: $file->extension() ?: 'bin';
-        $name = Str::random() . '.' . strtolower($extension);
-
-        if (!Storage::disk('public')->putFileAs($directory, $file, $name)) {
-            throw new \Exception("Unable to save file \"{$file->getClientOriginalName()}\"");
-        }
-
-        $path = $directory . '/' . $name;
+        $media = app(MediaStorage::class)->put($file, 'images');
 
         ProductImage::create([
             'product_id' => $product->id,
-            'path' => $path,
-            'url' => URL::to(Storage::disk('public')->url($path)),
-            'mime' => $file->getClientMimeType(),
-            'size' => $file->getSize(),
+            'path' => $media['path'],
+            'url' => $media['url'],
+            'mime' => $media['mime'],
+            'size' => $media['size'],
             'position' => $position,
         ]);
     }
 
     private function deleteImage(ProductImage $image)
     {
-        if ($image->path) {
-            $directory = dirname($image->path);
-            if ($directory !== '.' && $directory !== '') {
-                Storage::disk('public')->deleteDirectory($directory);
-            }
-        }
+        app(MediaStorage::class)->delete($image->path);
 
         $image->delete();
     }

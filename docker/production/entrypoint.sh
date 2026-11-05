@@ -12,6 +12,20 @@ elif [ "${#APP_KEY}" -ne 51 ]; then
 fi
 echo "[entrypoint] Database target: ${DB_USERNAME:-<unset>}@${DB_HOST:-<unset>}:${DB_PORT:-3306}/${DB_DATABASE:-<unset>}"
 
+# Render's free disk is ephemeral: files written to storage/app/public vanish on
+# the next deploy. Production therefore keeps uploads in MySQL by default and
+# serves them from /media/<path>. Log the resolved value so a deploy shows which
+# store is in use.
+MEDIA_DRIVER_RESOLVED="${MEDIA_DRIVER:-}"
+if [ -z "${MEDIA_DRIVER_RESOLVED}" ]; then
+    if [ "${APP_ENV:-production}" = "production" ]; then
+        MEDIA_DRIVER_RESOLVED=database
+    else
+        MEDIA_DRIVER_RESOLVED=local
+    fi
+fi
+echo "[entrypoint] Media driver: ${MEDIA_DRIVER_RESOLVED}"
+
 # Never log the secret itself, only whether it arrived.
 if [ -z "${DB_PASSWORD}" ]; then
     echo "[entrypoint] ERROR: DB_PASSWORD is empty - MySQL will reject the login with 'using password: NO'." >&2
@@ -52,6 +66,13 @@ mkdir -p \
 chown -R www-data:www-data storage bootstrap/cache
 
 php artisan storage:link || true
+
+if [ -e public/storage ]; then
+    echo "[entrypoint] public/storage is linked; seeded artwork is served from /storage."
+else
+    echo "[entrypoint] WARNING: public/storage is missing; seeded artwork under /storage will 404." >&2
+fi
+
 php artisan package:discover --ansi || true
 
 # Schema must exist before the app starts. Managed MySQL can be briefly

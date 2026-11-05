@@ -6,8 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BannerRequest;
 use App\Http\Resources\BannerResource;
 use App\Models\Banner;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use App\Support\MediaStorage;
 
 class BannerController extends Controller
 {
@@ -88,23 +87,16 @@ class BannerController extends Controller
 
     private function saveImage(array &$data, $image)
     {
-        $path = 'banners/' . Str::random(40);
-        if (!Storage::exists($path)) {
-            Storage::makeDirectory($path, 0755, true);
-        }
-        $name = Str::random().'.'.$image->getClientOriginalExtension();
-        if (!Storage::putFileAs('public/' . $path, $image, $name)) {
-            throw new \Exception("Unable to save file \"{$image->getClientOriginalName()}\"");
-        }
-        $relativePath = $path . '/' . $name;
-        $data['image_path'] = $relativePath;
-        $data['image_url'] = \Illuminate\Support\Facades\URL::to(Storage::url($relativePath));
+        $media = app(MediaStorage::class)->put($image, 'banners');
+
+        $data['image_path'] = $media['path'];
+        $data['image_url'] = $media['url'];
     }
 
     private function deleteImage(Banner $banner)
     {
         if ($banner->image_path) {
-            Storage::deleteDirectory('/public/' . dirname($banner->image_path));
+            app(MediaStorage::class)->delete($banner->image_path);
         }
     }
 }
