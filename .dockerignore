@@ -29,6 +29,14 @@ storage/framework/views/*
 bootstrap/cache/*.php
 storage/*.key
 
+# Runtime uploads. These are not tracked by Git, so building an image from a
+# working tree that has test uploads used to bake those old files into the
+# production image and make them reappear after a deploy.
+storage/app/public/images
+storage/app/public/banners
+storage/app/public/payment-proofs
+storage/app/public/logos
+
 # Local database and tooling
 database/database.sqlite
 .phpunit.result.cache

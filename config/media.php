@@ -23,6 +23,10 @@ return [
     |
     */
 
-    'driver' => env('MEDIA_DRIVER', env('APP_ENV') === 'production' ? 'database' : 'local'),
+    // `?:` (not a default argument) matters: an empty MEDIA_DRIVER= in the
+    // hosting dashboard still counts as "set". With env('MEDIA_DRIVER', ...)
+    // it would resolve to "" and silently fall back to the local disk, so
+    // uploads vanished on the next deploy.
+    'driver' => env('MEDIA_DRIVER') ?: (env('APP_ENV') === 'production' ? 'database' : 'local'),
 
 ];

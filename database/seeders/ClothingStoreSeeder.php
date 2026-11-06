@@ -8,6 +8,14 @@ use App\Models\ProductImage;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
+/**
+ * Seeds demo catalogue data.
+ *
+ * IMPORTANT: this seeder is non-destructive. It only creates rows that do not
+ * exist yet, so running it again (for example on every Render deploy because
+ * RUN_SEED=true) can never overwrite prices, descriptions, categories or
+ * images that an administrator edited in the admin panel.
+ */
 class ClothingStoreSeeder extends Seeder
 {
     public function run()
@@ -63,7 +71,7 @@ class ClothingStoreSeeder extends Seeder
         ];
 
         foreach ($products as [$title, $price, $quantity, $parentName, $childName, $image, $description]) {
-            $product = Product::updateOrCreate(
+            $product = Product::firstOrCreate(
                 ['title' => $title],
                 [
                     'description' => $description,
@@ -75,34 +83,44 @@ class ClothingStoreSeeder extends Seeder
                 ]
             );
 
+            // Existing products belong to the shop now: never re-apply seed
+            // categories, images or stock on a later deploy.
+            if (!$product->wasRecentlyCreated) {
+                continue;
+            }
+
             $product->categories()->syncWithoutDetaching([$categoryIds[$childName]]);
+            $this->createFallbackImage($product, $childName, $image);
+        }
+    }
 
-            if (!$product->images()->exists()) {
-                $path = 'images/products/' . $image . '.jpg';
+    /**
+     * Demo installs don't ship per-product photos; fall back to the category
+     * artwork so seeded cards never show a broken image.
+     */
+    private function createFallbackImage(Product $product, string $childName, string $image): void
+    {
+        $path = 'images/products/' . $image . '.jpg';
 
-                // Demo installs don't ship per-product photos; fall back to the
-                // category artwork so seeded cards never show a broken image.
-                if (!file_exists(storage_path('app/public/' . $path))) {
-                    foreach (['jpg', 'png'] as $extension) {
-                        $fallback = 'categories/' . Str::slug($childName) . '.' . $extension;
-                        if (file_exists(storage_path('app/public/' . $fallback))) {
-                            $path = $fallback;
-                            break;
-                        }
-                    }
+        if (!file_exists(storage_path('app/public/' . $path))) {
+            foreach (['jpg', 'png'] as $extension) {
+                $fallback = 'categories/' . Str::slug($childName) . '.' . $extension;
+                if (file_exists(storage_path('app/public/' . $fallback))) {
+                    $path = $fallback;
+                    break;
                 }
-
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'path' => $path,
-                    'url' => config('app.url') . '/storage/' . $path,
-                    'mime' => 'image/jpeg',
-                    'size' => file_exists(storage_path('app/public/' . $path))
-                        ? filesize(storage_path('app/public/' . $path))
-                        : 0,
-                    'position' => 1,
-                ]);
             }
         }
+
+        ProductImage::create([
+            'product_id' => $product->id,
+            'path' => $path,
+            'url' => config('app.url') . '/storage/' . $path,
+            'mime' => 'image/jpeg',
+            'size' => file_exists(storage_path('app/public/' . $path))
+                ? filesize(storage_path('app/public/' . $path))
+                : 0,
+            'position' => 1,
+        ]);
     }
 }

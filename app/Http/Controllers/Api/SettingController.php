@@ -5,9 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SettingsRequest;
 use App\Models\Setting;
+use App\Support\MediaStorage;
 use App\Support\Settings as SettingsHelper;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class SettingController extends Controller
 {
@@ -41,26 +40,21 @@ class SettingController extends Controller
         if ($request->hasFile('logo')) {
             $oldPath = SettingsHelper::get('logo_path');
             if ($oldPath) {
-                Storage::deleteDirectory('/public/' . dirname($oldPath));
+                app(MediaStorage::class)->delete($oldPath);
             }
 
-            $path = 'logos/' . Str::random(40);
-            if (!Storage::exists($path)) {
-                Storage::makeDirectory($path, 0755, true);
-            }
-            $name = Str::random().'.'.$request->file('logo')->getClientOriginalExtension();
-            if (!Storage::putFileAs('public/' . $path, $request->file('logo'), $name)) {
-                throw new \Exception('Unable to save logo file');
-            }
+            // Logos go through the same driver as every other upload, so they
+            // survive a redeploy instead of being written to the local disk.
+            $media = app(MediaStorage::class)->put($request->file('logo'), 'logos');
 
             Setting::updateOrCreate(
                 ['key' => 'logo_path'],
-                ['value' => $path . '/' . $name]
+                ['value' => $media['path']]
             );
         } elseif ($request->boolean('remove_logo')) {
             $oldPath = SettingsHelper::get('logo_path');
             if ($oldPath) {
-                Storage::deleteDirectory('/public/' . dirname($oldPath));
+                app(MediaStorage::class)->delete($oldPath);
             }
             Setting::updateOrCreate(['key' => 'logo_path'], ['value' => null]);
         }

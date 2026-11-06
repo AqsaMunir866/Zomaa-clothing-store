@@ -7,6 +7,13 @@ use App\Models\Setting;
 use App\Support\Settings as SettingsHelper;
 use Illuminate\Database\Seeder;
 
+/**
+ * Seeds the default branding, settings and hero banners.
+ *
+ * IMPORTANT: this seeder is non-destructive. It only creates rows that are
+ * missing, so a deploy (or a manual `db:seed`) never resets a logo, a banner
+ * image or a setting that an administrator changed in the admin panel.
+ */
 class BannerAndSettingsSeeder extends Seeder
 {
     /**
@@ -24,10 +31,17 @@ class BannerAndSettingsSeeder extends Seeder
         ];
 
         foreach ($settings as $key => $value) {
-            Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+            Setting::firstOrCreate(['key' => $key], ['value' => $value]);
         }
 
         SettingsHelper::flushCache();
+
+        // Banners are bootstrap data. Once the shop has any banner the admin
+        // owns the whole set, so a redeploy must never re-add or overwrite the
+        // demo banners (that is what reverted uploaded hero images).
+        if (Banner::query()->exists()) {
+            return;
+        }
 
         $heroBanners = [
             [
@@ -57,19 +71,17 @@ class BannerAndSettingsSeeder extends Seeder
         ];
 
         foreach ($heroBanners as $index => $banner) {
-            Banner::updateOrCreate(
-                ['title' => $banner['title'], 'position' => 'hero'],
-                [
-                    'kicker' => $banner['kicker'],
-                    'text' => $banner['text'],
-                    'link_label' => $banner['link_label'],
-                    'link_url' => $banner['link_url'],
-                    'image_url' => asset('storage/categories/' . $banner['image_slug'] . '.jpg'),
-                    'position' => 'hero',
-                    'sort_order' => $index,
-                    'active' => true,
-                ]
-            );
+            Banner::create([
+                'title' => $banner['title'],
+                'kicker' => $banner['kicker'],
+                'text' => $banner['text'],
+                'link_label' => $banner['link_label'],
+                'link_url' => $banner['link_url'],
+                'image_url' => asset('storage/categories/' . $banner['image_slug'] . '.jpg'),
+                'position' => 'hero',
+                'sort_order' => $index,
+                'active' => true,
+            ]);
         }
 
         $splitBanners = [
@@ -92,19 +104,17 @@ class BannerAndSettingsSeeder extends Seeder
         ];
 
         foreach ($splitBanners as $index => $banner) {
-            Banner::updateOrCreate(
-                ['title' => $banner['title'], 'position' => 'split'],
-                [
-                    'kicker' => $banner['kicker'],
-                    'text' => $banner['text'],
-                    'link_label' => $banner['link_label'],
-                    'link_url' => $banner['link_url'],
-                    'image_url' => asset('storage/categories/' . $banner['image_slug'] . '.png'),
-                    'position' => 'split',
-                    'sort_order' => $index,
-                    'active' => true,
-                ]
-            );
+            Banner::create([
+                'title' => $banner['title'],
+                'kicker' => $banner['kicker'],
+                'text' => $banner['text'],
+                'link_label' => $banner['link_label'],
+                'link_url' => $banner['link_url'],
+                'image_url' => asset('storage/categories/' . $banner['image_slug'] . '.png'),
+                'position' => 'split',
+                'sort_order' => $index,
+                'active' => true,
+            ]);
         }
     }
 }

@@ -24,7 +24,27 @@ if [ -z "${MEDIA_DRIVER_RESOLVED}" ]; then
         MEDIA_DRIVER_RESOLVED=local
     fi
 fi
+
+case "${MEDIA_DRIVER_RESOLVED}" in
+    local|database|s3) ;;
+    *)
+        if [ "${APP_ENV:-production}" = "production" ]; then
+            MEDIA_DRIVER_RESOLVED=database
+        else
+            MEDIA_DRIVER_RESOLVED=local
+        fi
+        ;;
+esac
+
+# Export the resolved value so config/media.php and this log line can never
+# disagree (an empty MEDIA_DRIVER in the host dashboard used to log "database"
+# while the app actually wrote uploads to the ephemeral local disk).
+export MEDIA_DRIVER="${MEDIA_DRIVER_RESOLVED}"
 echo "[entrypoint] Media driver: ${MEDIA_DRIVER_RESOLVED}"
+
+if [ "${MEDIA_DRIVER_RESOLVED}" = "local" ] && [ "${APP_ENV:-production}" = "production" ]; then
+    echo "[entrypoint] WARNING: MEDIA_DRIVER=local on a host with an ephemeral disk; uploads will disappear on redeploy." >&2
+fi
 
 # Never log the secret itself, only whether it arrived.
 if [ -z "${DB_PASSWORD}" ]; then
@@ -105,8 +125,11 @@ else
     head -n 25 /tmp/dbprobe.log >&2
 fi
 
-# Optional first-deploy seeding (set RUN_SEED=true once, then false).
+# Optional demo seeding. The seeder classes are idempotent and never modify
+# existing rows, so leaving RUN_SEED=true is harmless - but it is still only
+# needed for the very first deploy.
 if [ "${RUN_SEED:-false}" = "true" ]; then
+    echo "[entrypoint] RUN_SEED=true: applying demo seed data (existing rows are never overwritten)."
     php artisan db:seed --force || true
     php artisan db:seed --class=ClothingStoreSeeder --force || true
     php artisan db:seed --class=BannerAndSettingsSeeder --force || true

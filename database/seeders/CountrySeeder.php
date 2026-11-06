@@ -31,7 +31,7 @@ class CountrySeeder extends Seeder
             ['code' => 'ger', 'name' => 'Germany', 'states' => null],
         ];
         foreach ($countries as $country) {
-            Country::updateOrCreate(['code' => $country['code']], $country);
+            Country::firstOrCreate(['code' => $country['code']], $country);
         }
     }
 }

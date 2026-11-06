@@ -148,7 +148,9 @@ ending in `DONE`, and `Seeding database.` lines.
 
 **Environment → `RUN_SEED` → `false` → Save** (triggers a redeploy).
 
-The seeders are idempotent, but leaving `RUN_SEED=true` would re-run them on every container start.
+The seeders are non-destructive: they only create rows that are missing, so
+`RUN_SEED=true` no longer resets banners, logos, settings or product images.
+Still keep it `false` after the first deploy; it only wastes startup time.
 
 ---
 
@@ -209,6 +211,13 @@ then re-upload the image from the admin panel.
 The URL may be cached by the browser. Uploaded paths are random, so a real
 replacement produces a new URL; hard-refresh the page. Locally, restart the app
 container so OPcache picks up PHP edits.
+
+**Uploaded images show for a while, then the old demo images come back after a deploy**
+The seeders used to run on every deploy with `updateOrCreate()` and reset banner
+images, settings and product rows to the demo values. They are now
+non-destructive (`firstOrCreate()` / skipped once data exists), so re-uploading
+the image once is enough. If you still see it, check the deploy log for the
+seeders and confirm the image URL is `/media/...` (database driver).
 
 **Local images work, production images do not**
 Local uses `/storage` + the local disk; production uses `/media` + MySQL. That

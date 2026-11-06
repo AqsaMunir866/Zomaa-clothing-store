@@ -32,7 +32,15 @@ class MediaStorage
 
     public function driver(): string
     {
-        return (string) config('media.driver', self::LOCAL);
+        $driver = (string) config('media.driver', self::LOCAL);
+
+        if (in_array($driver, [self::LOCAL, self::DATABASE, self::S3], true)) {
+            return $driver;
+        }
+
+        // A blank or misspelled MEDIA_DRIVER must never quietly write uploads
+        // to an ephemeral disk in production.
+        return config('app.env') === 'production' ? self::DATABASE : self::LOCAL;
     }
 
     /**

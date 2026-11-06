@@ -40,7 +40,12 @@ class Settings
     {
         $path = self::get('logo_path');
 
-        return $path ? asset('storage/' . $path) : null;
+        if (!$path) {
+            return null;
+        }
+
+        // Works for database/S3 uploads as well as legacy /storage logos.
+        return app(MediaStorage::class)->storedUrl($path, asset('storage/' . $path));
     }
 
     public static function flushCache(): void
