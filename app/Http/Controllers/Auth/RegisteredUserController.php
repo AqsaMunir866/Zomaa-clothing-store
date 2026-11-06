@@ -47,6 +47,10 @@ class RegisteredUserController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                // Customers can shop immediately after registering. There is
+                // no email verification step, so mark the address as verified
+                // instead of leaving a column that other code may still read.
+                'email_verified_at' => now(),
             ]);
 
             event(new Registered($user));

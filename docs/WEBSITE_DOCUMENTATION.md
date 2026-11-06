@@ -54,8 +54,7 @@ laravel-vue-ecommerce/
 │   │   │   │   └── DashboardController.php     # dashboard widgets
 │   │   │   └── Auth/                   # Breeze auth controllers
 │   │   ├── Middleware/
-│   │   │   ├── Admin.php               # requires is_admin == 1 (else 403 JSON)
-│   │   │   └── GuestOrVerified.php     # guests OR verified users (blocks unverified)
+│   │   │   └── Admin.php               # requires is_admin == 1 (else 403 JSON)
 │   │   ├── Requests/                   # Form request validation
 │   │   └── Resources/                  # API JSON resources
 │   ├── Mail/                           # NewOrderEmail, OrderUpdateEmail
@@ -129,7 +128,7 @@ laravel-vue-ecommerce/
 
 ### 4.1 Storefront (web)
 
-**Public (guests, or verified users — `guestOrVerified` middleware)**
+**Public (guests and signed-in customers — no email verification required)**
 
 | Method | URI | name | Purpose |
 |---|---|---|---|
@@ -141,7 +140,7 @@ laravel-vue-ecommerce/
 | POST | `/cart/remove/{product:slug}` | `cart.remove` | Remove from cart |
 | POST | `/cart/update-quantity/{product:slug}` | `cart.update-quantity` | Change quantity |
 
-**Authenticated + email verified (`auth`, `verified`)**
+**Authenticated (`auth`)**
 
 | Method | URI | name | Purpose |
 |---|---|---|---|
@@ -160,7 +159,7 @@ laravel-vue-ecommerce/
 | GET | `/orders/{order}/pay` | `order.pay` | Payment info / proof upload |
 | POST | `/orders/{order}/pay` | `order.pay.submit` | Submit payment proof |
 
-**Auth pages (Breeze):** `/register`, `/login`, `/forgot-password`, `/reset-password/{token}`, `/verify-email`, `/confirm-password`.
+**Auth pages (Breeze):** `/register`, `/login`, `/forgot-password`, `/reset-password/{token}`, `/confirm-password`.
 **Webhook:** `POST /webhook/stripe` (legacy).
 
 ### 4.2 Admin API (`/api`, middleware `auth:sanctum` + `admin`)
@@ -236,8 +235,8 @@ personal_access_tokens                          # Sanctum
 - On login/registration, `Cart::moveCartItemsIntoDb()` merges cookie items into the DB.
 - Stock is respected: adding/updating beyond `product.quantity` returns **422** with a message.
 
-### 6.3 Registration & Email Verification
-`RegisteredUserController` creates a `User` **and** a linked `Customer` (status active), then logs in. `GuestOrVerified` lets guests browse but requires verified users to continue. Disabled customers are blocked at login (`LoginRequest`).
+### 6.3 Registration
+`RegisteredUserController` creates a `User` **and** a linked `Customer` (status active), marks the email as verified, then logs in. There is **no email verification step**: a new customer can browse, add to cart and place an order immediately. Disabled customers are blocked at login (`LoginRequest`).
 
 ### 6.4 Profile
 `ProfileController` edits name/email/phone and **shipping + billing addresses** (stored in `customer_addresses`). Checkout requires both addresses, else redirects to profile.
