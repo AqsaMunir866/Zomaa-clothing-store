@@ -9,24 +9,20 @@
     </button>
   </div>
   <UsersTable @clickEdit="editUser"/>
-  <UserModal v-model="showUserModal" :user="userModel" @close="onModalClose"/>
+  <UserModal v-model="showUserModal" :user="userModel"/>
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from "vue";
-import store from "../../store";
+import {ref} from "vue";
 import UserModal from "./UserModal.vue";
 import UsersTable from "./UsersTable.vue";
 
 const DEFAULT_USER = {
   id: '',
-  title: '',
-  description: '',
-  image: '',
-  price: ''
+  name: '',
+  email: '',
+  password: ''
 }
-
-const users = computed(() => store.state.users);
 
 const userModel = ref({...DEFAULT_USER})
 const showUserModal = ref(false);
@@ -38,10 +34,6 @@ function showAddNewModal() {
 function editUser(u) {
     userModel.value = u;
     showAddNewModal();
-}
-
-function onModalClose() {
-  userModel.value = {...DEFAULT_USER}
 }
 </script>
 

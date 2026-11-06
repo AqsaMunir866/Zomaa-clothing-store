@@ -8,22 +8,32 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\Concerns\CreatesStorefrontUsers;
 use Tests\TestCase;
 
 class OrderPaymentTest extends TestCase
 {
     use DatabaseTransactions;
+    use CreatesStorefrontUsers;
+
+    private User $owner;
+
+    private User $otherUser;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
+
+        // Keep the test self-contained: do not depend on seeded rows.
+        $this->owner = $this->createVerifiedUser(['email' => 'order-owner@example.com']);
+        $this->otherUser = $this->createVerifiedUser(['email' => 'order-other@example.com']);
     }
 
     private function verifiedUser(): User
     {
-        return User::query()->whereNotNull('email_verified_at')->firstOrFail();
+        return $this->owner;
     }
 
     private function makeOrder(User $user, string $type): array
@@ -77,10 +87,7 @@ class OrderPaymentTest extends TestCase
         $owner = $this->verifiedUser();
         [$order] = $this->makeOrder($owner, 'jazzcash');
 
-        $other = User::query()
-            ->where('id', '!=', $owner->id)
-            ->whereNotNull('email_verified_at')
-            ->firstOrFail();
+        $other = $this->otherUser;
 
         $this->actingAs($other)
             ->get(route('order.pay', $order))
